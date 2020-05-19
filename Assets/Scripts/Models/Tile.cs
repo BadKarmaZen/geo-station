@@ -8,11 +8,17 @@ public class TileUpdateEvent : Event
   public Tile Tile { get; set; }
 }
 
-public class FixedObjectUpdateEvent
+//public class FixedObjectUpdateEvent
+//{
+//  public FixedObject FixedObject { get; set; }
+//  public bool UpdateOnly { get; set; }
+//  public bool JobFailed { get; internal set; }
+//}
+
+public class ItemUpdatedEvent : Event
 {
-  public FixedObject FixedObject { get; set; }
+  public Item Item { get; set; }
   public bool UpdateOnly { get; set; }
-  public bool JobFailed { get; internal set; }
 }
 
 public class Tile
@@ -31,7 +37,11 @@ public class Tile
   #region Properties
 
   public TileType Type { get; protected set; } = TileType.Space;
-  public FixedObject FixedObject { get; set; }
+
+  //  TODO
+  //public FixedObject FixedObject { get; set; }
+  public Item Item { get; set; }
+
   public MovableObject MovableObject { get; set; }
 
 
@@ -47,7 +57,7 @@ public class Tile
   internal static float Distance(Tile tileA, Tile tileB)
   {
     return Mathf.Sqrt(Mathf.Pow(tileA.Position.x - tileB.Position.x, 2) + Mathf.Pow(tileA.Position.y - tileB.Position.y, 2));
-  }  
+  }
 
   #endregion
 
@@ -69,23 +79,36 @@ public class Tile
     {
       Type = type;
 
-      Debug.Log($"Set tile @{Position} to {Type}");      
+      Debug.Log($"Set tile @{Position} to {Type}");
       new TileUpdateEvent { Tile = this }.Publish();
 
       //IoC.Get<EventAggregator>().Publish(new TileUpdateEvent { Tile = this });
     }
   }
 
-  public void InstallFixedObject(FixedObject fixedObject)
+  public void InstallItemOnTile(Item item)
   {
-    //Debug.Log($"InstallFixedObject ({fixedObject})");
+    Item = item;
 
+    //  TODO is this the best place
+
+    Item.Installing = false;
     JobScheduled = false;
-    this.FixedObject = fixedObject;
-    FixedObject.Installing = false;
 
-    IoC.Get<EventAggregator>().Publish(new FixedObjectUpdateEvent { FixedObject = fixedObject });
+    //  TODO Does this belong here
+    new ItemUpdatedEvent { Item = item }.Publish();
   }
+
+  //public void InstallFixedObject(FixedObject fixedObject)
+  //{
+  //  //Debug.Log($"InstallFixedObject ({fixedObject})");
+
+  //  JobScheduled = false;
+  //  this.FixedObject = fixedObject;
+  //  FixedObject.Installing = false;
+
+  //  IoC.Get<EventAggregator>().Publish(new FixedObjectUpdateEvent { FixedObject = fixedObject });
+  //}
 
 
   //public bool NorthOf(Tile tile)
@@ -109,15 +132,15 @@ public class Tile
   //}
 
   //  Job failed
-  internal void CannotCompleteJob(FixedObject fixedObject)
-  {
-    IoC.Get<EventAggregator>().Publish(new FixedObjectUpdateEvent { FixedObject = fixedObject, JobFailed = true });
+  //internal void CannotCompleteJob(FixedObject fixedObject)
+  //{
+  //  IoC.Get<EventAggregator>().Publish(new FixedObjectUpdateEvent { FixedObject = fixedObject, JobFailed = true });
 
-    JobScheduled = false;
-    FixedObject = null;
-  }
+  //  JobScheduled = false;
+  //  FixedObject = null;
+  //}
 
-  
+
 
   #endregion
 

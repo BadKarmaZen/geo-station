@@ -5,14 +5,16 @@ using System.Linq;
 using UnityEngine;
 
 public class SpriteController : MonoBehaviour
-  , IHandle<TileUpdateEvent>, IHandle<FixedObjectUpdateEvent>
+  , IHandle<TileUpdateEvent>
+  , IHandle<ItemUpdatedEvent>
   , IHandle<BuildingResourceUpdatedEvent>
 {
   #region Members
 
   private Dictionary<Position, GameObject> _tileGraphics = new Dictionary<Position, GameObject>();
-  private Dictionary<FixedObject, GameObject> _fixedObjectGraphics = new Dictionary<FixedObject, GameObject>();
-  private Dictionary<string, Sprite> _fixedObjectSprites = new Dictionary<string, Sprite>();
+  private Dictionary<Item, GameObject> _fixedObjectGraphics = new Dictionary<Item, GameObject>();
+  //private Dictionary<string, Sprite> _fixedObjectSprites = new Dictionary<string, Sprite>();
+  private ResourceCollection _resourceCollection;
 
 
   private Dictionary<BuildingResource, GameObject> _resourceGraphics = new Dictionary<BuildingResource, GameObject>();
@@ -42,53 +44,54 @@ public class SpriteController : MonoBehaviour
     }
   }
 
-  public void OnHandle(FixedObjectUpdateEvent message)
+  public void OnHandle(ItemUpdatedEvent message)
   {
-    var fixedObject = message.FixedObject;
+    var item = message.Item;
 
-    if (message.JobFailed)
-    {
-      //  remove job sprite
-      if (_fixedObjectGraphics.ContainsKey(fixedObject))
-      {
-        var graphic = _fixedObjectGraphics[fixedObject];
-        Destroy(graphic);
-        return;
-      }
-    }
+    //  TODO remove job
+    //if (message.JobFailed)
+    //{
+    //  //  remove job sprite
+    //  if (_fixedObjectGraphics.ContainsKey(item))
+    //  {
+    //    var graphic = _fixedObjectGraphics[item];
+    //    Destroy(graphic);
+    //    return;
+    //  }
+    //}
 
     if (message.UpdateOnly == false)
     {
       GameObject graphic;
       SpriteRenderer renderer;
 
-      if (!_fixedObjectGraphics.ContainsKey(fixedObject))
+      if (!_fixedObjectGraphics.ContainsKey(item))
       {
         graphic = new GameObject();
 
-        graphic.name = $"{fixedObject.Type}_{fixedObject.Tile.Position}";
-        graphic.transform.position = new Vector3(fixedObject.Tile.Position.x, fixedObject.Tile.Position.y);
+        graphic.name = $"{item.Type}_{item.Tile.Position}";
+        graphic.transform.position = new Vector3(item.Tile.Position.x, item.Tile.Position.y);
         graphic.transform.SetParent(this.transform, true);
 
-        _fixedObjectGraphics.Add(fixedObject, graphic);
+        _fixedObjectGraphics.Add(item, graphic);
         renderer = graphic.AddComponent<SpriteRenderer>();
       }
       else
       {
-        renderer = _fixedObjectGraphics[fixedObject].GetComponent<SpriteRenderer>();
+        renderer = _fixedObjectGraphics[item].GetComponent<SpriteRenderer>();
       }
 
-      var spriteName = BuildFixedObjectSpriteName(fixedObject);
-      renderer.sprite = GetSprite(spriteName);
+      var spriteName = BuildItemSpriteName(item);
+      renderer.sprite = _resourceCollection.GetSprite(spriteName);
       renderer.sortingLayerName = "FixedObjects";
 
-      NotifyNeighbours(fixedObject);
+      NotifyNeighbours(item);
     }
     else
     {
-      var renderer = _fixedObjectGraphics[fixedObject].GetComponent<SpriteRenderer>();
-      var spriteName = BuildFixedObjectSpriteName(fixedObject);
-      renderer.sprite = GetSprite(spriteName);
+      var renderer = _fixedObjectGraphics[item].GetComponent<SpriteRenderer>();
+      var spriteName = BuildItemSpriteName(item);
+      renderer.sprite = _resourceCollection.GetSprite(spriteName);
     }
   }
   
@@ -106,7 +109,7 @@ public class SpriteController : MonoBehaviour
 
       _resourceGraphics.Add(message.Resource, graphic);
       var renderer = graphic.AddComponent<SpriteRenderer>();
-      renderer.sprite = GetSprite($"{message.Resource.Type}_Resource");
+      renderer.sprite = _resourceCollection.GetSprite($"{message.Resource.Type}_Resource");
       renderer.sortingLayerName = "FixedObjects";
     }
     else
@@ -149,23 +152,22 @@ public class SpriteController : MonoBehaviour
 
   #endregion
 
+  #region Unity
+
   public void Awake()
   {
     Debug.Log($"SpriteController.ctor");
     IoC.Get<EventAggregator>().Subscribe(this);
   }
 
-  #region Unity
-
   public Sprite floorSprite;
 
   // Start is called before the first frame update
   void Start()
-  {
+  { 
     Debug.Log($"SpriteController.Start");
 
-
-    LoadResources();
+    _resourceCollection = new ResourceCollection("Objects");
 
     var world = IoC.Get<World>();
     CreateWorldGame(world);
@@ -183,56 +185,56 @@ public class SpriteController : MonoBehaviour
 
   #region Helpers
 
-  private void LoadResources()
+  //private void LoadResources()
+  //{
+  //  var sprites = Resources.LoadAll<Sprite>("Objects");
+
+  //  foreach (var sprite in sprites)
+  //  {
+  //    _fixedObjectSprites.Add(sprite.name, sprite);
+  //  }
+  //}
+
+  //public Sprite GetSprite(string name)
+  //{
+  //  if (_fixedObjectSprites.ContainsKey(name) == false)
+  //  {
+  //    Debug.Log("Fixed object Sprite not found: " + name);
+  //    return null;
+  //  }
+
+  //  return _fixedObjectSprites[name];
+  //}
+
+  private string BuildItemSpriteName(Item item)
   {
-    var sprites = Resources.LoadAll<Sprite>("Objects");
-
-    foreach (var sprite in sprites)
-    {
-      _fixedObjectSprites.Add(sprite.name, sprite);
-    }
-  }
-
-  public Sprite GetSprite(string name)
-  {
-    if (_fixedObjectSprites.ContainsKey(name) == false)
-    {
-      Debug.Log("Fixed object Sprite not found: " + name);
-      return null;
-    }
-
-    return _fixedObjectSprites[name];
-  }
-
-  private string BuildFixedObjectSpriteName(FixedObject fixedObject)
-  {
-    if (fixedObject.Installing)
-      return fixedObject.Type + "Job_";
+  //  if (item.Installing)
+  //    return item.Type + "Job_";
 
 
-    var spriteName = fixedObject.Type + "_";
-    var neighbourType = IoC.Get<ObjectFactory>().GetNeighbourType(fixedObject);
+    var spriteName = item.Type + "_";
+    var factory = IoC.Get<ObjectFactory>().GetFactory(item);
 
     //  check surrounding tiles
-    var neighbours = from t in IoC.Get<World>().GetNeighbourTiles(fixedObject.Tile)
-                     where t.FixedObject?.Type == neighbourType
+    var neighbours = from t in IoC.Get<World>().GetNeighbourTiles(item.Tile)
+                     where factory.IsValidNeighbour( t.Item?.Type)
                      select t;
 
     foreach (var neighbour in neighbours)
     {
-      if (neighbour.Position.IsNorthOf(fixedObject.Tile.Position))
+      if (neighbour.Position.IsNorthOf(item.Tile.Position))
       {
         spriteName += "N";
       }
-      if (neighbour.Position.IsEastOf(fixedObject.Tile.Position))
+      if (neighbour.Position.IsEastOf(item.Tile.Position))
       {
         spriteName += "E";
       }
-      if (neighbour.Position.IsSouthOf(fixedObject.Tile.Position))
+      if (neighbour.Position.IsSouthOf(item.Tile.Position))
       {
         spriteName += "S";
       }
-      if (neighbour.Position.IsWestOf(fixedObject.Tile.Position))
+      if (neighbour.Position.IsWestOf(item.Tile.Position))
       {
         spriteName += "W";
       }
@@ -242,15 +244,15 @@ public class SpriteController : MonoBehaviour
   }
 
   //  TODO : ? move to job
-  private void NotifyNeighbours(FixedObject fixedObject)
+  private void NotifyNeighbours(Item item)
   {
-    var neighbours = from t in IoC.Get<World>().GetNeighbourTiles(fixedObject.Tile)
-                     where t.FixedObject != null
+    var neighbours = from t in IoC.Get<World>().GetNeighbourTiles(item.Tile)
+                     where t.Item != null
                      select t;
 
     foreach (var neighbour in neighbours)
     {
-      IoC.Get<EventAggregator>().Publish(new FixedObjectUpdateEvent { FixedObject = neighbour.FixedObject, UpdateOnly = true });
+      new ItemUpdatedEvent { Item = neighbour.Item, UpdateOnly = true }.Publish();
     }
   }
 

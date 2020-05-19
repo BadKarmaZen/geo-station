@@ -71,27 +71,62 @@ public class WorldController : MonoBehaviour
   #region Helpers
   private void CreatePrototypes()
   {
-    var factory = IoC.Get<ObjectFactory>();
+    var objectFactory = IoC.Get<ObjectFactory>();
 
-    factory.CreatePrototype("Wall", 0f);  //  0 => non movable object
-    factory.CreatePrototype("Door", 1.2f, "Wall", (tile, type) =>
+    //  wall
+    objectFactory.CreateFactory(new Item(Item.Wall, 0f)).AddBuildRule( (tile, factory) =>
     {
-      var n = _world.GetTile(tile.Position.GetNorth());
-      var s = _world.GetTile(tile.Position.GetNorth());
-      if (n?.FixedObject?.Type == type && s?.FixedObject?.Type == type)
-      {
-        return true;
-      }
-
-      var e = _world.GetTile(tile.Position.GetEast());
-      var w = _world.GetTile(tile.Position.GetWest());
-      if (e?.FixedObject?.Type == type && w?.FixedObject?.Type == type)
-      {
-        return true;
-      }
-
-      return false; 
+      //  a wall must be build on a floor tile
+      return tile.Type == Tile.TileType.Floor;
     });
+
+    var doorFactory = objectFactory.CreateFactory(new Item(Item.Door, 1.2f), Item.Wall);
+    doorFactory.AddBuildRule((tile, factory) => 
+    {
+      if (tile.Type != Tile.TileType.Floor)
+        return false;
+
+      //  door must have wall to north & south, or east & west
+      var north = _world.GetTile(tile.Position.GetNorth());
+      var south = _world.GetTile(tile.Position.GetSouth());
+
+      if (factory.IsValidNeighbour(north?.Item?.Type) &&
+          factory.IsValidNeighbour(south?.Item?.Type))
+      {
+        return true;
+      }
+
+      var west = _world.GetTile(tile.Position.GetWest());
+      var east = _world.GetTile(tile.Position.GetEast());
+
+      if (factory.IsValidNeighbour(west?.Item?.Type) &&
+          factory.IsValidNeighbour(east?.Item?.Type))
+      {
+        return true;
+      }
+
+      return false;
+    });
+
+    //factory.CreatePrototype("Wall", 0f);  //  0 => non movable object
+    //factory.CreatePrototype("Door", 1.2f, "Wall", (tile, type) =>
+    //{
+    //  var n = _world.GetTile(tile.Position.GetNorth());
+    //  var s = _world.GetTile(tile.Position.GetNorth());
+    //  if (n?.FixedObject?.Type == type && s?.FixedObject?.Type == type)
+    //  {
+    //    return true;
+    //  }
+
+    //  var e = _world.GetTile(tile.Position.GetEast());
+    //  var w = _world.GetTile(tile.Position.GetWest());
+    //  if (e?.FixedObject?.Type == type && w?.FixedObject?.Type == type)
+    //  {
+    //    return true;
+    //  }
+
+    //  return false; 
+    //});
   }
 
   #endregion

@@ -42,8 +42,8 @@ public class PathFinding
         {
           Tile = tile,
           Walkable = tile.Type == Tile.TileType.Floor &&
-                    (tile.FixedObject == null || tile.FixedObject.MovementCost != 0),
-          mCost = tile.FixedObject?.MovementCost ?? 1f    
+                    (tile.Item == null || tile.Item.MovementCost != 0),
+          mCost = tile.Item?.MovementCost ?? 1f    
         };
       }
     }

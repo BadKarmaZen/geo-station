@@ -1,5 +1,7 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class JobUpdateEvent
@@ -11,6 +13,9 @@ public class JobUpdateEvent
 public class JobController : MonoBehaviour, IHandle<JobUpdateEvent>
 {
   #region Members
+
+  ResourceCollection _resourceCollection;
+  Dictionary<Job, GameObject> _jobGraphics = new Dictionary<Job, GameObject>();
 
   bool updateWorkForce;
 
@@ -31,6 +36,8 @@ public class JobController : MonoBehaviour, IHandle<JobUpdateEvent>
   void Start()
   {
     IoC.Get<EventAggregator>().Subscribe(this);
+
+    _resourceCollection = new ResourceCollection("Jobs");
   }
 
   // Update is called once per frame
@@ -67,8 +74,84 @@ public class JobController : MonoBehaviour, IHandle<JobUpdateEvent>
 
   public void AddJob(Job job)
   {
+    AddGraphics(job);
+
     job.Tile.JobScheduled = true;
     _scheduledJob.Add(job);
+  }
+
+  private void AddGraphics(Job job)
+  {
+    var graphic = new GameObject();
+    graphic.name = $"{job.Item.Type}_{job.Tile.Position}";
+    graphic.transform.position = job.Tile.Position.GetVector();
+    graphic.transform.SetParent(this.transform, true);
+
+    _jobGraphics.Add(job, graphic);
+    var renderer = graphic.AddComponent<SpriteRenderer>();
+    renderer.sprite = _resourceCollection.GetSprite(GetSpriteName(job));
+    renderer.sortingLayerName = "FixedObjects";
+
+    //  doesn't seem to be working correct
+    job.AudioSource = graphic.AddComponent<AudioSource>();
+    job.AudioSource.volume = 0.5f;
+    job.AudioSource.spatialBlend = 1.0f;
+    job.AudioSource.rolloffMode = AudioRolloffMode.Linear;
+    job.AudioSource.minDistance = 10f;
+    job.AudioSource.maxDistance = 50;
+  }
+
+  private string GetSpriteName(Job job)
+  {
+    var spriteName = job.Item.Type + "_";
+
+    //  TODO improve
+    if (job.Item.Type == Item.Door)
+    {
+      var factory = IoC.Get<ObjectFactory>().GetFactory(job.Item);
+
+      //  check surrounding tiles
+      var neighbours = from t in IoC.Get<World>().GetNeighbourTiles(job.Tile)
+                       where factory.IsValidNeighbour(t.Item?.Type)
+                       select t;
+
+      foreach (var neighbour in neighbours)
+      {
+        if (neighbour.Position.IsNorthOf(job.Tile.Position))
+        {
+          spriteName += "N";
+        }
+        if (neighbour.Position.IsEastOf(job.Tile.Position))
+        {
+          spriteName += "E";
+        }
+        if (neighbour.Position.IsSouthOf(job.Tile.Position))
+        {
+          spriteName += "S";
+        }
+        if (neighbour.Position.IsWestOf(job.Tile.Position))
+        {
+          spriteName += "W";
+        }
+      }
+
+      return spriteName;
+
+    }
+    else
+    {
+      return spriteName;
+    }
+  }
+
+  private void RemoveGraphics(Job job)
+  {
+    if (_jobGraphics.ContainsKey(job))
+    {
+      //  TODO  to replace with spawn
+      Destroy(_jobGraphics[job]);
+      _jobGraphics.Remove(job);
+    }
   }
 
   void StartJob()
@@ -105,8 +188,10 @@ public class JobController : MonoBehaviour, IHandle<JobUpdateEvent>
       }
       else
       {
+        //  TODO
         //  job is delete
-        job.Tile.CannotCompleteJob(job.FixedObject);
+        //  
+        //job.Tile.CannotCompleteJob(job.FixedObject);
       }
       _scheduledJob.RemoveAt(0);
     }
@@ -128,8 +213,11 @@ public class JobController : MonoBehaviour, IHandle<JobUpdateEvent>
     var job = message.Job;
 
     //  TODO - replace
-    job.Tile.InstallFixedObject(job.FixedObject);
-    job.Tile.JobScheduled = false;
+    //job.Tile.InstallFixedObject(job.FixedObject);
+    job.Tile.InstallItemOnTile(job.Item);
+    //job.Tile.JobScheduled = false;
+
+    RemoveGraphics(job);
   }
 
   void UpdateWorkForce()
@@ -140,7 +228,7 @@ public class JobController : MonoBehaviour, IHandle<JobUpdateEvent>
 
       _freeWorkers.AddRange(_activeWorkers.FindAll(w => w.CurrentJob == null));
       _activeWorkers.RemoveAll(w => w.CurrentJob == null);
-    }     
+    }
   }
 
   #endregion

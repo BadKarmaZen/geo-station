@@ -100,20 +100,20 @@ public class BuildController : MonoBehaviour, IHandle<DragEvent>
             //resource.Reserve();
 
             //  yes we can build a wall
-            var fixedObject = IoC.Get<ObjectFactory>().CreateFixedObject(_buildType, tile);
+            var item = IoC.Get<ObjectFactory>().CreateItem(_buildType, tile);
 
-            if (fixedObject != null)
+            if (item != null)
             {
               //  Create a job for it
               IoC.Get<JobController>().AddJob(new Job
               {
                 Tile = tile,
-                FixedObject = fixedObject,
-                BuildTime = fixedObject.Type == "Door" ? 0.5f : 1f
+                Item = item,
+                BuildTime = item.Type == "Door" ? 0.5f : 1f
               }) ;
 
               //  TODO ? jobcontroller
-              IoC.Get<EventAggregator>().Publish(new FixedObjectUpdateEvent { FixedObject = fixedObject });
+              //new ItemUpdatedEvent { Item = item }.Publish();
             }
           }
           else

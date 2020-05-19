@@ -116,7 +116,7 @@ public class Character
       if (SelectedResourcePile == null)
       {
         //  no resource, get it
-        SelectedResourcePile = IoC.Get<BuildingResourceController>().SelectResourcePile(CurrentJob.FixedObject.Type);
+        SelectedResourcePile = IoC.Get<BuildingResourceController>().SelectResourcePile(CurrentJob.Item.Type);
         if (SelectedResourcePile != null)
         {
           SelectedResourcePile.Reserve();
