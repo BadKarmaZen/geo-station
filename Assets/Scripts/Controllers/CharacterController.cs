@@ -16,7 +16,7 @@ public class CharacterController : MonoBehaviour, IHandle<CharacterCreatedEvent>
 
   #region Members
 
-  private Dictionary<string, Sprite> _characterSprites = new Dictionary<string, Sprite>();
+  private ResourceCollection _resourceCollection;
   Dictionary<Character, CharacterInfo> _characterGraphics = new Dictionary<Character, CharacterInfo>();
 
   #endregion
@@ -35,7 +35,7 @@ public class CharacterController : MonoBehaviour, IHandle<CharacterCreatedEvent>
     characterInfo.main.transform.SetParent(this.transform, true);    
 
     var renderer = characterInfo.main.AddComponent<SpriteRenderer>();
-    renderer.sprite = _characterSprites["Astronaut_B"];// astro;//_sprites["astro"];
+    renderer.sprite = _resourceCollection.GetSprite("Astronaut_B");
     renderer.sortingLayerName = "Character";
 
     //  create hand object
@@ -47,7 +47,7 @@ public class CharacterController : MonoBehaviour, IHandle<CharacterCreatedEvent>
     characterInfo.hand.transform.SetParent(characterInfo.main.transform, true);
 
     renderer = characterInfo.hand.AddComponent<SpriteRenderer>();
-    renderer.sprite = _characterSprites["Hands_B"];// astro;//_sprites["astro"];
+    renderer.sprite = _resourceCollection.GetSprite("Hands_B"); 
     renderer.sortingLayerName = "Character";
   }
 
@@ -57,7 +57,7 @@ public class CharacterController : MonoBehaviour, IHandle<CharacterCreatedEvent>
     var info = _characterGraphics[message.Character];
     if (message.Hand)
     {
-      info.hand.transform.position = new Vector3(info.hand.transform.position.x, message.Character.HandY, 0);
+      info.hand.transform.position = new Vector3(info.hand.transform.position.x, message.Character.HandY, -1);
     }
     else
     {
@@ -76,7 +76,7 @@ public class CharacterController : MonoBehaviour, IHandle<CharacterCreatedEvent>
   {
     IoC.Get<EventAggregator>().Subscribe(this);
 
-    LoadSprites();
+    _resourceCollection = new ResourceCollection("Other");
   }
 
   // Start is called before the first frame update
@@ -93,16 +93,6 @@ public class CharacterController : MonoBehaviour, IHandle<CharacterCreatedEvent>
   #endregion
 
   #region Helpers
-
-  void LoadSprites()
-  {
-    var sprites = Resources.LoadAll<Sprite>("Other");
-
-    foreach (var sprite in sprites)
-    {
-      _characterSprites.Add(sprite.name, sprite);
-    }
-  }
 
   #endregion
 

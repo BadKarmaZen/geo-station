@@ -56,12 +56,7 @@ public class WorldController : MonoBehaviour
       IoC.Get<JobController>().AddWorker(worker);
     }
   }
-
-  //internal void CreateResourcePile(string resourceType, Tile from)
-  //{
-    
-  //}
-
+  
   // Update is called once per frame
   void Update()
   {
@@ -74,11 +69,14 @@ public class WorldController : MonoBehaviour
     var objectFactory = IoC.Get<ObjectFactory>();
 
     //  wall
-    objectFactory.CreateFactory(new Item(Item.Wall, 0f)).AddBuildRule( (tile, factory) =>
+    var wallFactory = objectFactory.CreateFactory(new Item(Item.Wall, 0f));
+    wallFactory.AddBuildRule( (tile, factory) =>
     {
       //  a wall must be build on a floor tile
       return tile.Type == Tile.TileType.Floor;
     });
+
+    wallFactory.BuildSound = "welding";
 
     var doorFactory = objectFactory.CreateFactory(new Item(Item.Door, 1.2f), Item.Wall);
     doorFactory.AddBuildRule((tile, factory) => 
@@ -108,25 +106,7 @@ public class WorldController : MonoBehaviour
       return false;
     });
 
-    //factory.CreatePrototype("Wall", 0f);  //  0 => non movable object
-    //factory.CreatePrototype("Door", 1.2f, "Wall", (tile, type) =>
-    //{
-    //  var n = _world.GetTile(tile.Position.GetNorth());
-    //  var s = _world.GetTile(tile.Position.GetNorth());
-    //  if (n?.FixedObject?.Type == type && s?.FixedObject?.Type == type)
-    //  {
-    //    return true;
-    //  }
-
-    //  var e = _world.GetTile(tile.Position.GetEast());
-    //  var w = _world.GetTile(tile.Position.GetWest());
-    //  if (e?.FixedObject?.Type == type && w?.FixedObject?.Type == type)
-    //  {
-    //    return true;
-    //  }
-
-    //  return false; 
-    //});
+    doorFactory.BuildSound = "welding";
   }
 
   #endregion

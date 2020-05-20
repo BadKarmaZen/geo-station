@@ -13,7 +13,6 @@ public class SpriteController : MonoBehaviour
 
   private Dictionary<Position, GameObject> _tileGraphics = new Dictionary<Position, GameObject>();
   private Dictionary<Item, GameObject> _fixedObjectGraphics = new Dictionary<Item, GameObject>();
-  //private Dictionary<string, Sprite> _fixedObjectSprites = new Dictionary<string, Sprite>();
   private ResourceCollection _resourceCollection;
 
 

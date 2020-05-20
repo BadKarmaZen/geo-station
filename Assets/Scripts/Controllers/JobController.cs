@@ -92,13 +92,23 @@ public class JobController : MonoBehaviour, IHandle<JobUpdateEvent>
     renderer.sprite = _resourceCollection.GetSprite(GetSpriteName(job));
     renderer.sortingLayerName = "FixedObjects";
 
+    //var audio = new GameObject();
+    //audio.transform.position = job.Tile.Position.GetVector();
+    //audio.transform.SetParent(this.transform, true);
+
     //  doesn't seem to be working correct
     job.AudioSource = graphic.AddComponent<AudioSource>();
-    job.AudioSource.volume = 0.5f;
+
+    // get sound
+    var factory = IoC.Get<ObjectFactory>().GetFactory(job.Item);
+    job.AudioSource.clip = Resources.Load<AudioClip>($"Sounds/{factory.BuildSound}"); ;
+
+    //job.AudioSource.loop = true;
+    job.AudioSource.volume = 0.1f;
     job.AudioSource.spatialBlend = 1.0f;
     job.AudioSource.rolloffMode = AudioRolloffMode.Linear;
-    job.AudioSource.minDistance = 10f;
-    job.AudioSource.maxDistance = 50;
+    job.AudioSource.minDistance = 5;
+    job.AudioSource.maxDistance = 11.5f;
   }
 
   private string GetSpriteName(Job job)

@@ -18,6 +18,7 @@ public class ItemFactory
   public string Type { get; protected set; }
   public List<string> AllowedNeighbourTypes { get; protected set; }
   public Item Protoype { get; protected set; }
+  public string BuildSound { get; set; }
 
   #endregion
 

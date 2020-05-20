@@ -15,7 +15,7 @@ public class Job
 
 
 	//	TODO sound countroller
-	AudioClip _ac;
+	bool _startSound = true;
 	public AudioSource AudioSource { get; set; }
 	#endregion
 
@@ -24,10 +24,9 @@ public class Job
 	public bool ProcessJob(float deltaTime)
 	{
 		//	TODO TEST CODE
-		if (AudioSource != null && _ac == null)
+		if (_startSound)
 		{
-			_ac = Resources.Load<AudioClip>("Sounds/welding");
-			this.AudioSource.clip = _ac;
+			_startSound = false;
 			this.AudioSource.Play();
 
 
@@ -36,7 +35,7 @@ public class Job
 
 		BuildTime -= deltaTime;
 
-		if (BuildTime  < 0 && _ac != null)
+		if (BuildTime  < 0)
 		{
 			this.AudioSource.Stop();
 		}
