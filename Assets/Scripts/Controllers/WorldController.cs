@@ -27,14 +27,12 @@ public class WorldController : MonoBehaviour
 
     IoC.RegisterType<GameObjectFactory>();
     IoC.RegisterType<ObjectFactory>();
+    IoC.RegisterInstance(this);
 
     _world = new World();
     IoC.RegisterInstance(_world);
 
     CreatePrototypes();
-
-    //  TEST
-    IoC.RegisterInstance(this);
   }
 
 
@@ -78,7 +76,38 @@ public class WorldController : MonoBehaviour
 
     wallFactory.BuildSound = "welding";
 
-    var doorFactory = objectFactory.CreateFactory(new Item(Item.Door, 1.2f), Item.Wall);
+    var doorPrototype = new Item(Item.Door, 1.2f) { CurrentState = "Closed" };
+    var doorFactory = objectFactory.CreateFactory(doorPrototype, Item.Wall);
+
+    doorFactory.AddAction(action: "OpenDoor", from: "Closed", transition: "Opening", to: "Opened", (Item item, float deltaTime) => 
+    {
+      Debug.Log($"Opening ({item.ActionTime})");
+      item.ActionTime += deltaTime;
+
+      if (item.ActionTime >= 1f)  //  1 second
+      {
+        Debug.Log($"Open.Done");
+        return true;
+      }
+
+      return false; 
+    }, idle : "CloseDoor");
+
+    doorFactory.AddAction(action: "CloseDoor", from: "Opened", transition: "Closing", to: "Closed", (Item item, float deltaTime) =>
+    {
+      Debug.Log($"Closing ({item.ActionTime})");
+      item.ActionTime += deltaTime;
+
+      if (item.ActionTime >= 1f)  //  1 second
+      {
+        Debug.Log($"Open.Closed");
+        return true;
+      }
+
+      return false;
+    });
+
+
     doorFactory.AddBuildRule((tile, factory) => 
     {
       if (tile.Type != Tile.TileType.Floor)

@@ -29,7 +29,7 @@ public class BuildingResource
     AmountReserved = 0;
     Tile = tile;
 
-    Debug.Log($"BuildingResource.Create: {Type}_{Id}.(a = {Amount}, r={AmountReserved}) => {AmountLeft}");
+    //Debug.Log($"BuildingResource.Create: {Type}_{Id}.(a = {Amount}, r={AmountReserved}) => {AmountLeft}");
     new BuildingResourceUpdatedEvent { Resource = this }.Publish();
   }
 
@@ -37,7 +37,7 @@ public class BuildingResource
   {
     AmountReserved++;
 
-    Debug.Log($"BuildingResource.Reserve: {Type}_{Id}.(a = {Amount}, r={AmountReserved}) => {AmountLeft}");
+    //Debug.Log($"BuildingResource.Reserve: {Type}_{Id}.(a = {Amount}, r={AmountReserved}) => {AmountLeft}");
   }
 
   internal void TakeResource()
@@ -45,11 +45,11 @@ public class BuildingResource
     Amount--;
     AmountReserved--;
 
-    Debug.Log($"BuildingResource.TakeResource: {Type}_{Id}.(a = {Amount}, r={AmountReserved}) => {AmountLeft}");
+    //Debug.Log($"BuildingResource.TakeResource: {Type}_{Id}.(a = {Amount}, r={AmountReserved}) => {AmountLeft}");
 
     if (Amount == 0)
     {
-      Debug.Log($"BuildingResource.TakeResource => notify");
+      //Debug.Log($"BuildingResource.TakeResource => notify");
       new BuildingResourceUpdatedEvent { Resource = this }.Publish();
     }
   }

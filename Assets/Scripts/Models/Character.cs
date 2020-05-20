@@ -55,7 +55,7 @@ public class Character
   {
     get
     {
-      Debug.Log($"Hand => {_handMovement} ");
+      //Debug.Log($"Hand => {_handMovement} ");
       return Mathf.Lerp(CurrentTile.Position.y - 0.2f, CurrentTile.Position.y + 0.1f, _handMovement);
     }
   }
@@ -220,6 +220,32 @@ public class Character
       //  DestinationTile = null;
       //}
     }
+
+    if (NextTile?.Item?.Type == Item.Door)
+    {
+      if (NextTile.Item.CurrentState == "Closed")
+      {
+        Debug.Log("Character at closed door");
+        if (CurrentJob != null)
+        {
+          NextTile.Item.SetAction("OpenDoor");
+        }
+        else
+        {
+          //  no job, no need to open door
+          DestinationTile = null;
+          NextTile = null;
+          return;
+        }        
+      }
+
+      if (NextTile.Item.CurrentState != "Opened")
+      {
+        //  we need to wait
+        return;
+      }
+    }
+
 
     if (NextTile != null)
     {

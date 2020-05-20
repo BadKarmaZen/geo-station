@@ -9,6 +9,7 @@ public class World
 
   private Tile[,] _tiles;
   private List<Character> _characters = new List<Character>();
+  private List<Item> _items = new List<Item>();
 
   public (int width, int height) Size { get; set; }
 
@@ -43,6 +44,11 @@ public class World
     foreach (var character in _characters)
     {
       character.Update(deltaTime);
+    }
+
+    foreach (var item in _items)
+    {
+      item.Update(deltaTime);
     }
   }
 
@@ -115,6 +121,11 @@ public class World
     }
   }
 
+  internal void AddItem(Item item)
+  {
+    _items.Add(item);
+  }
+
   public Character CreateCharacter(Tile tile)
   {
     var character = new Character(tile) { Speed = 2f };
@@ -122,7 +133,6 @@ public class World
 
     return character;
   }
-
 
 
   //  TODO - mock

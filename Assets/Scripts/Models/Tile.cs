@@ -79,7 +79,6 @@ public class Tile
     {
       Type = type;
 
-      Debug.Log($"Set tile @{Position} to {Type}");
       new TileUpdateEvent { Tile = this }.Publish();
 
       //IoC.Get<EventAggregator>().Publish(new TileUpdateEvent { Tile = this });
@@ -90,7 +89,10 @@ public class Tile
   {
     Item = item;
 
-    //  TODO is this the best place
+    //  Add item to world collection ?
+    World.AddItem(item);
+
+    //  TODO is this the best place ?
 
     Item.Installing = false;
     JobScheduled = false;
