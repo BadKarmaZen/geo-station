@@ -2,7 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
+using UnityEngine.Playables;
 
 public class CreateTileEvent : Event
 {
@@ -31,12 +31,13 @@ public class Tile
   /// </summary>
   public enum TileType { Space, Floor };
 
+
   #endregion
 
   #region Properties
 
   public TileType Type { get; protected set; } = TileType.Space;
-  
+
   public Item Item { get; set; }
 
   //public MovableObject MovableObject { get; set; }
@@ -91,6 +92,11 @@ public class Tile
 
     //  TODO Does this belong here
     new ItemUpdatedEvent { Item = item }.Publish();
+  }
+
+  public Enterable IsEnterable()
+  {
+    return Item == null ? Enterable.Yes : Item.IsEnterable(Item);
   }
 
   #endregion

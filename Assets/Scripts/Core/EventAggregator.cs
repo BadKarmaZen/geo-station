@@ -15,7 +15,7 @@ public class EventAggregator
 {
   #region Members
 
-  private Dictionary<Type, (object instance, MethodInfo method)> _handlers = new Dictionary<Type, (object, MethodInfo)>();
+  private Dictionary<Type, List<(object instance, MethodInfo method)>> _handlers = new Dictionary<Type, List<(object, MethodInfo)>>();
 
   #endregion
 
@@ -23,25 +23,34 @@ public class EventAggregator
   {
     if (handler != null)
     {
-      var type = handler.GetType();
-      var methods = from i in type.GetInterfaces()
-                    let method = i.GetMethod("OnHandle")
+      var methods = from @interface in handler.GetType().GetInterfaces()
+                    let method = @interface.GetMethod("OnHandle")
                     where method != null
-                    select method;
+                    let type = method.GetParameters()[0].ParameterType
+                    select (type, method);
 
-      foreach (var method in methods)
+      foreach (var (eventType, method) in methods)
       {
         Debug.Log($"EventAggregator.Subscribe({method.GetParameters()[0].ParameterType})");
-        _handlers.Add(method.GetParameters()[0].ParameterType, (handler, method));
+
+        if (!_handlers.ContainsKey(eventType))
+        {
+          _handlers.Add(eventType, new List<(object instance, MethodInfo method)>());
+        }
+
+        _handlers[eventType].Add((handler, method));
       }
     }
   }
 
   public void Publish<T>(T message)
   {
-    if (_handlers.TryGetValue(message.GetType(), out var handler))
+    if (_handlers.TryGetValue(message.GetType(), out var handlers))
     {
-      handler.method.Invoke(handler.instance, new object[] { message });
+      foreach (var handler in handlers)
+      {
+        handler.method.Invoke(handler.instance, new object[] { message });
+      }
     }
     else
     {

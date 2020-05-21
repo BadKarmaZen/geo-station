@@ -5,6 +5,7 @@ using System.Linq;
 using UnityEngine;
 
 public class SpriteController : MonoBehaviour
+  , IHandle<WorldUpdateEvent>
   , IHandle<CreateTileEvent>
   , IHandle<TileUpdateEvent>
   , IHandle<ItemUpdatedEvent>
@@ -13,15 +14,42 @@ public class SpriteController : MonoBehaviour
   #region Members
 
   private Dictionary<Position, GameObject> _tileGraphics = new Dictionary<Position, GameObject>();
-  private Dictionary<Item, GameObject> _fixedObjectGraphics = new Dictionary<Item, GameObject>();
+  private Dictionary<Item, GameObject> _itemGraphics = new Dictionary<Item, GameObject>();
   private ResourceCollection _resourceCollection;
-
 
   private Dictionary<BuildingResource, GameObject> _resourceGraphics = new Dictionary<BuildingResource, GameObject>();
 
   #endregion
 
   #region Events
+
+  public void OnHandle(WorldUpdateEvent message)
+  {
+    if (message.Reset)
+    {
+      //  a new world has been set up
+      //  _destroy all currenty graphics
+
+      foreach (var tile in _tileGraphics.Values)
+      {
+        Destroy(tile);
+      }
+      foreach (var item in _itemGraphics.Values)
+      {
+        Destroy(item);
+      }
+      foreach (var resource in _resourceGraphics.Values)
+      {
+        Destroy(resource);
+      }
+
+      _tileGraphics = new Dictionary<Position, GameObject>();
+      _itemGraphics = new Dictionary<Item, GameObject>();
+      _resourceGraphics = new Dictionary<BuildingResource, GameObject>();
+    }
+  }
+
+
   public void OnHandle(CreateTileEvent message)
   {
     GameObject goTile = new GameObject();
@@ -69,25 +97,44 @@ public class SpriteController : MonoBehaviour
     //  }
     //}
 
+    //  TODO improve - generic
+    bool rotate = false;
+
+    if (item.Type == Item.Door)
+    {
+      //  default door is EW
+      //  it there is a wall to the north this is as NS door, so rotate
+      var north = IoC.Get<WorldController>().GetTile(item.Tile.Position.GetNorth());
+      var south = IoC.Get<WorldController>().GetTile(item.Tile.Position.GetSouth());
+
+      rotate = north?.Item?.Type == Item.Wall && south?.Item?.Type == Item.Wall;
+    }
+
     if (message.UpdateOnly == false)
     {
       GameObject graphic;
       SpriteRenderer renderer;
 
-      if (!_fixedObjectGraphics.ContainsKey(item))
+      if (!_itemGraphics.ContainsKey(item))
       {
         graphic = new GameObject();
 
         graphic.name = $"{item.Type}_{item.Tile.Position}";
         graphic.transform.position = new Vector3(item.Tile.Position.x, item.Tile.Position.y);
+
+        if (rotate)
+        {
+          graphic.transform.rotation = Quaternion.Euler(0, 0, 90);
+        }
+
         graphic.transform.SetParent(this.transform, true);
 
-        _fixedObjectGraphics.Add(item, graphic);
+        _itemGraphics.Add(item, graphic);
         renderer = graphic.AddComponent<SpriteRenderer>();
       }
       else
       {
-        renderer = _fixedObjectGraphics[item].GetComponent<SpriteRenderer>();
+        renderer = _itemGraphics[item].GetComponent<SpriteRenderer>();
       }
 
       var spriteName = BuildItemSpriteName(item);
@@ -98,7 +145,7 @@ public class SpriteController : MonoBehaviour
     }
     else
     {
-      var renderer = _fixedObjectGraphics[item].GetComponent<SpriteRenderer>();
+      var renderer = _itemGraphics[item].GetComponent<SpriteRenderer>();
       var spriteName = BuildItemSpriteName(item);
       renderer.sprite = _resourceCollection.GetSprite(spriteName);
     }
@@ -187,6 +234,36 @@ public class SpriteController : MonoBehaviour
   void Update()
   {
 
+    //  TODO need to move?
+    foreach (var pair in _itemGraphics)
+    {
+      var (item, graphic) = (pair.Key, pair.Value);
+
+      if (item.Type == Item.Door)
+      {
+        var renderer = graphic.GetComponent<SpriteRenderer>();
+
+        var openness = item.GetParameter<float>("openness");
+
+        if (openness < 0.1f)  // door is closed
+        {
+          renderer.sprite = _resourceCollection.GetSprite("Door_Openness_0");
+        }
+        else if (openness < 0.5f)  // door is closed
+        {
+          renderer.sprite = _resourceCollection.GetSprite("Door_Openness_1");
+        }
+        else if (openness < 0.9f)  // door is closed
+        {
+          renderer.sprite = _resourceCollection.GetSprite("Door_Openness_2");
+        }
+        else
+        {
+          renderer.sprite = _resourceCollection.GetSprite("Door_Openness_3");
+        }
+      }
+    }
+
   }
 
 
@@ -255,7 +332,6 @@ public class SpriteController : MonoBehaviour
       new ItemUpdatedEvent { Item = neighbour.Item, UpdateOnly = true }.Publish();
     }
   }
-
 
   #endregion
 }

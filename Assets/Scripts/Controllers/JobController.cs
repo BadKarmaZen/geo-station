@@ -4,13 +4,15 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-public class JobUpdateEvent
+public class JobUpdateEvent : Event
 {
   public Job Job { get; set; }
   public Character Worker { get; set; }
 }
 
-public class JobController : MonoBehaviour, IHandle<JobUpdateEvent>
+public class JobController : MonoBehaviour
+  , IHandle<WorldUpdateEvent>
+  , IHandle<JobUpdateEvent>
 {
   #region Members
 
@@ -22,6 +24,28 @@ public class JobController : MonoBehaviour, IHandle<JobUpdateEvent>
   List<Job> _scheduledJob = new List<Job>();
   List<Character> _freeWorkers = new List<Character>();
   List<Character> _activeWorkers = new List<Character>();
+
+  #endregion
+
+  #region Events
+
+  public void OnHandle(WorldUpdateEvent message)
+  {
+    if (message.Reset)
+    {
+      //  a new world has been set up
+      //
+      foreach (var job in _jobGraphics.Values)
+      {
+        Destroy(job);
+      }
+      _scheduledJob = new List<Job>();
+      _freeWorkers = new List<Character>();
+      _activeWorkers = new List<Character>();
+
+      _jobGraphics = new Dictionary<Job, GameObject>();
+    }
+  }
 
   #endregion
 
@@ -122,9 +146,9 @@ public class JobController : MonoBehaviour, IHandle<JobUpdateEvent>
 
       //  check surrounding tiles
       var neighbours = IoC.Get<WorldController>().GetNeighbourTiles(job.Tile, tile => factory.IsValidNeighbour(tile.Item?.Type));
-        //from t in IoC.Get<World>().GetNeighbourTiles(job.Tile)
-        //               where 
-        //               select t;
+      //from t in IoC.Get<World>().GetNeighbourTiles(job.Tile)
+      //               where 
+      //               select t;
 
       foreach (var neighbour in neighbours)
       {

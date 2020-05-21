@@ -3,8 +3,9 @@ using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System.Security.Cryptography;
 
-public class CharacterEvent
+public class CharacterEvent : Event
 {
   public Character Character { get; set; }
 }
@@ -100,74 +101,108 @@ public class Character
   }
   private void UpdateTask(float deltaTime)
   {
+    //  if nothing to do, move idle
     if (CurrentJob == null)
     {
-      //  idle movement
-      MoveIdle();
+      if (DestinationTile == null)
+      {
+        Debug.Log($"move idle");
+        MoveIdle();
+      }
 
       return;
     }
 
-    if (!HasResource)
+    /*  
+     *  We have a job
+     *  1. find resource pile
+     *  2. reserve resource from pile
+     *  3. start going to pile
+     *  4. at resource pile: Take resource
+     *  5. start going to job
+     *  6. at job location: do work
+     *  */
+
+    if (HasResource)
     {
-      //  has job, do we have the resource
+      //  we have a resource, what now?
+
+      //  at job location
+      if (CurrentTile == CurrentJob.Tile)
+      {
+        if (CurrentJob.ProcessJob(deltaTime))
+        {
+          //  job is completed
+          new JobUpdateEvent
+          {
+            Worker = this,
+            Job = CurrentJob
+          }.Publish();
+
+          CurrentJob = null;
+          HasResource = false;
+        }
+
+        //  animate handes
+        _handMovement += 0.03f;
+        if (_handMovement > 1.0f)
+        {
+          _handMovement = 0f;
+        }
+
+        new CharacterUpdatedEvent { Character = this, Hand = true }.Publish();
+
+        return;
+      }
+
+      if (DestinationTile == null)
+      {
+        Debug.Log($"we have resource, and are not at job location");
+
+        //  we have resource, and are not at job location
+        //
+        SetDestination(CurrentJob.Tile);
+        return;
+      }
+
+      //  on our way to our job
+      return;
+    }
+    else
+    {
+      //  we do not have a resource yet
       if (SelectedResourcePile == null)
       {
-        //  no resource, get it
+        Debug.Log($"we do not have a resource yet: find resources");
+
+        //  find resources
         SelectedResourcePile = IoC.Get<BuildingResourceController>().SelectResourcePile(CurrentJob.Item.Type);
         if (SelectedResourcePile != null)
         {
           SelectedResourcePile.Reserve();
         }
+
+        return;
       }
 
-      if (SelectedResourcePile != null && DestinationTile == null)
+      //  we are at the resource pile
+      if (CurrentTile == SelectedResourcePile.Tile)
       {
-        SetDestination(SelectedResourcePile.Tile);
-      }
+        Debug.Log($"we are at the resource pile");
 
-      if (CurrentTile == SelectedResourcePile?.Tile)
-      {
         SelectedResourcePile.TakeResource();
         HasResource = true;
         SelectedResourcePile = null;
+
+        return;
       }
 
-      //  no resources or cannot reach resource
-      if (SelectedResourcePile == null || DestinationTile == null)
+      if (DestinationTile == null)
       {
-        MoveIdle();
+        Debug.Log($"we do not have a resource yet: we have found resources, set destination");
+
+        SetDestination(SelectedResourcePile.Tile);
       }
-    }
-
-    if (HasResource && DestinationTile == null)
-    {
-      SetDestination(CurrentJob.Tile);
-    }
-
-    if (HasResource && CurrentTile == CurrentJob.Tile)
-    {
-      //  we have a job and we are at the location
-      if (CurrentJob.ProcessJob(deltaTime))
-      {
-        IoC.Get<EventAggregator>().Publish(new JobUpdateEvent
-        {
-          Worker = this,
-          Job = CurrentJob
-        });
-
-        CurrentJob = null;
-        HasResource = false;
-      }
-
-      _handMovement += 0.03f;
-
-      if (_handMovement > 1.0f)
-      {
-        _handMovement = 0f;
-      }
-
-      IoC.Get<EventAggregator>().Publish(new CharacterUpdatedEvent { Character = this, Hand = true });
     }
   }
 
@@ -219,30 +254,42 @@ public class Character
       //}
     }
 
-    if (NextTile?.Item?.Type == Item.Door)
+    //  Enter behaviour
+    if (NextTile?.IsEnterable() == Enterable.Never)
     {
-      if (NextTile.Item.CurrentState == "Closed")
-      {
-        Debug.Log("Character at closed door");
-        if (CurrentJob != null)
-        {
-          NextTile.Item.SetAction("OpenDoor");
-        }
-        else
-        {
-          //  no job, no need to open door
-          DestinationTile = null;
-          NextTile = null;
-          return;
-        }        
-      }
-
-      if (NextTile.Item.CurrentState != "Opened")
-      {
-        //  we need to wait
-        return;
-      }
+      //  cannot enter
+      DestinationTile = NextTile = null;
     }
+    else if (NextTile?.IsEnterable() == Enterable.Soon)
+    {
+      //  wait until we can enter the tile
+      return;
+    }
+
+    //if (NextTile?.Item?.Type == Item.Door)
+    //{
+    //  if (NextTile.Item.CurrentState == "Closed")
+    //  {
+    //    Debug.Log("Character at closed door");
+    //    if (CurrentJob != null)
+    //    {
+    //      NextTile.Item.SetAction("OpenDoor");
+    //    }
+    //    else
+    //    {
+    //      //  no job, no need to open door
+    //      DestinationTile = null;
+    //      NextTile = null;
+    //      return;
+    //    }        
+    //  }
+
+    //  if (NextTile.Item.CurrentState != "Opened")
+    //  {
+    //    //  we need to wait
+    //    return;
+    //  }
+    //}
 
 
     if (NextTile != null)
@@ -274,6 +321,8 @@ public class Character
       Debug.LogError($"Already has job");
       return false;
     }
+
+    Debug.Log($"Assign new job");
 
     CurrentJob = job;
     return true;

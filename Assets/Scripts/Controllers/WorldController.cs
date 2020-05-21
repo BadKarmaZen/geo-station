@@ -4,12 +4,18 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+public class WorldUpdateEvent : Event
+{
+  public bool Reset { get; set; }
+  public bool Paused { get; set; }
+  public bool UnPaused { get; set; }
+}
+
 public class WorldController : MonoBehaviour
 {
   #region Member
 
   World _world;
-
   Dictionary<(int x, int y), GameObject> _tiles = new Dictionary<(int x, int y), GameObject>();
 
   #endregion
@@ -24,9 +30,7 @@ public class WorldController : MonoBehaviour
     IoC.RegisterType<ObjectFactory>();
     IoC.RegisterInstance(this);
 
-    //_world = new World();
-    //IoC.RegisterInstance(_world);
-
+    //  TODO : improve to some core location
     CreatePrototypes();
   }
 
@@ -35,7 +39,7 @@ public class WorldController : MonoBehaviour
   // Start is called before the first frame update
   void Start()
   {
-   
+
   }
 
   // Update is called once per frame
@@ -52,6 +56,9 @@ public class WorldController : MonoBehaviour
   {
     //  Creates a new world
     //
+
+    new WorldUpdateEvent { Reset = true }.Publish();
+
     _world = new World();
 
     Debug.Log("CreateWorldGame");
@@ -76,7 +83,7 @@ public class WorldController : MonoBehaviour
 
     var centerTile = _world.GetTile(center);
 
-    for (int i = 0; i < 5; i++)
+    for (int i = 0; i < 1; i++)
     {
       var worker = _world.CreateCharacter(centerTile);
       IoC.Get<EventAggregator>().Publish(new CharacterCreatedEvent { Character = worker });
@@ -136,35 +143,13 @@ public class WorldController : MonoBehaviour
 
     wallFactory.BuildSound = "welding";
 
-    var doorPrototype = new Item(Item.Door, 1.2f) { CurrentState = "Closed" };
+    var doorPrototype = new Item(Item.Door, 1.2f);
     var doorFactory = objectFactory.CreateFactory(doorPrototype, Item.Wall);
 
-    doorFactory.AddAction(action: "OpenDoor", from: "Closed", transition: "Opening", to: "Opened", (Item item, float deltaTime) =>
-    {
-      item.ActionTime += deltaTime;
-
-      if (item.ActionTime >= 1f)  //  1 second
-      {
-        Debug.Log($"Open.Done");
-        return true;
-      }
-
-      return false;
-    }, idle: "CloseDoor");
-
-    doorFactory.AddAction(action: "CloseDoor", from: "Opened", transition: "Closing", to: "Closed", (Item item, float deltaTime) =>
-    {
-      item.ActionTime += deltaTime;
-
-      if (item.ActionTime >= 1f)  //  1 second
-      {
-        Debug.Log($"Open.Closed");
-        return true;
-      }
-
-      return false;
-    });
-
+    doorPrototype.Parameters["openness"] = 0f;
+    doorPrototype.Parameters["is_opening"] = true;
+    doorPrototype.UpdateActions += ItemActions.DoorUpdateAction;
+    doorPrototype.IsEnterable = ItemActions.DoorIsEnterable;
 
     doorFactory.AddBuildRule((tile, factory) =>
     {

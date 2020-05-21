@@ -1,8 +1,12 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Security.Cryptography;
 using UnityEngine;
 
-public class CharacterController : MonoBehaviour, IHandle<CharacterCreatedEvent>, IHandle<CharacterUpdatedEvent>
+public class CharacterController : MonoBehaviour
+  , IHandle<WorldUpdateEvent>
+  , IHandle<CharacterCreatedEvent>
+  , IHandle<CharacterUpdatedEvent>
 {
   #region internals
 
@@ -23,16 +27,33 @@ public class CharacterController : MonoBehaviour, IHandle<CharacterCreatedEvent>
 
   #region Events
 
+  public void OnHandle(WorldUpdateEvent message)
+  {
+    if (message.Reset)
+    {
+      //  a new world has been set up
+      //
+      foreach (var character in _characterGraphics.Values)
+      {
+        Destroy(character.main);
+      }
+
+      _characterGraphics = new Dictionary<Character, CharacterInfo>();
+    }
+  }
+
   public void OnHandle(CharacterCreatedEvent message)
   {
-    var characterInfo = new CharacterInfo();    
+    Debug.Log("CharacterController.CharacterCreatedEvent");
+
+    var characterInfo = new CharacterInfo();
     _characterGraphics.Add(message.Character, characterInfo);
 
     characterInfo.main = new GameObject();
 
     characterInfo.main.name = "astro" + _characterGraphics.Count;
     characterInfo.main.transform.position = new Vector3(message.Character.CurrentTile.Position.x, message.Character.CurrentTile.Position.y);
-    characterInfo.main.transform.SetParent(this.transform, true);    
+    characterInfo.main.transform.SetParent(this.transform, true);
 
     var renderer = characterInfo.main.AddComponent<SpriteRenderer>();
     renderer.sprite = _resourceCollection.GetSprite("Astronaut_B");
@@ -47,12 +68,12 @@ public class CharacterController : MonoBehaviour, IHandle<CharacterCreatedEvent>
     characterInfo.hand.transform.SetParent(characterInfo.main.transform, true);
 
     renderer = characterInfo.hand.AddComponent<SpriteRenderer>();
-    renderer.sprite = _resourceCollection.GetSprite("Hands_B"); 
+    renderer.sprite = _resourceCollection.GetSprite("Hands_B");
     renderer.sortingLayerName = "Character";
   }
 
   public void OnHandle(CharacterUpdatedEvent message)
-  { 
+  {
     // find game object
     var info = _characterGraphics[message.Character];
     if (message.Hand)
@@ -63,7 +84,7 @@ public class CharacterController : MonoBehaviour, IHandle<CharacterCreatedEvent>
     {
       info.main.transform.position = new Vector3(message.Character.X, message.Character.Y, 0);
     }
-    
+
   }
 
   #endregion

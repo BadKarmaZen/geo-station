@@ -8,10 +8,11 @@ using UnityEngine;
 /// This controller manages the Resources
 /// </summary>
 public class BuildingResourceController : MonoBehaviour
+  , IHandle<WorldUpdateEvent>
 {
   #region Members
 
-  List<BuildingResource> _resources = new List<BuildingResource>();
+  List<BuildingResource> _resources;
 
   #endregion
 
@@ -21,6 +22,19 @@ public class BuildingResourceController : MonoBehaviour
   {
     var resource = new BuildingResource(type, tile);
     _resources.Add(resource);
+  }
+
+  public void OnHandle(WorldUpdateEvent message)
+  {
+    if (message.Reset)
+    {
+    //  foreach (var resource in _resources)
+    //  {
+    //    Destroy(resource);
+    //  }
+
+      _resources = new List<BuildingResource>();
+    }
   }
 
   public BuildingResource SelectResourcePile(string type)
@@ -35,6 +49,7 @@ public class BuildingResourceController : MonoBehaviour
   void Awake()
   {
     IoC.RegisterInstance(this);
+    IoC.Get<EventAggregator>().Subscribe(this);
   }
 
   // Start is called before the first frame update
@@ -46,7 +61,7 @@ public class BuildingResourceController : MonoBehaviour
   // Update is called once per frame
   void Update()
   {
-    _resources.RemoveAll(r => r.Amount == 0);
+    _resources?.RemoveAll(r => r.Amount == 0);
   }
 
   #endregion
