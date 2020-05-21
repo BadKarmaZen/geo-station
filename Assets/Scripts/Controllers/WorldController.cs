@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -46,7 +47,7 @@ public class WorldController : MonoBehaviour
       IoC.Get<JobController>().AddWorker(worker);
     }
   }
-  
+
   // Update is called once per frame
   void Update()
   {
@@ -64,9 +65,33 @@ public class WorldController : MonoBehaviour
     _world = new World();
 
   }
+
   #endregion
 
-  #region Helpers
+
+  #region Helper Methods
+   
+  public IEnumerable<Tile> GetTiles(Tile fromTile, Tile toTile)
+  {
+    if (fromTile == null || toTile == null)
+        yield break;
+
+    foreach (var position in Position.GetPositions(fromTile.Position, toTile.Position))
+    {
+      var tile = _world.GetTile(position);
+      if (tile != null)
+      {
+        yield return tile;
+      }
+    }
+  }
+
+  internal Tile GetTile(Position position) => _world?.GetTile(position);
+
+  #endregion
+
+
+  #region internal Helpers
 
   private void CreatePrototypes()
   {
@@ -74,18 +99,18 @@ public class WorldController : MonoBehaviour
 
     //  wall
     var wallFactory = objectFactory.CreateFactory(new Item(Item.Wall, 0f));
-    wallFactory.AddBuildRule( (tile, factory) =>
-    {
+    wallFactory.AddBuildRule((tile, factory) =>
+   {
       //  a wall must be build on a floor tile
       return tile.Type == Tile.TileType.Floor;
-    });
+   });
 
     wallFactory.BuildSound = "welding";
 
     var doorPrototype = new Item(Item.Door, 1.2f) { CurrentState = "Closed" };
     var doorFactory = objectFactory.CreateFactory(doorPrototype, Item.Wall);
 
-    doorFactory.AddAction(action: "OpenDoor", from: "Closed", transition: "Opening", to: "Opened", (Item item, float deltaTime) => 
+    doorFactory.AddAction(action: "OpenDoor", from: "Closed", transition: "Opening", to: "Opened", (Item item, float deltaTime) =>
     {
       item.ActionTime += deltaTime;
 
@@ -95,8 +120,8 @@ public class WorldController : MonoBehaviour
         return true;
       }
 
-      return false; 
-    }, idle : "CloseDoor");
+      return false;
+    }, idle: "CloseDoor");
 
     doorFactory.AddAction(action: "CloseDoor", from: "Opened", transition: "Closing", to: "Closed", (Item item, float deltaTime) =>
     {
@@ -112,7 +137,7 @@ public class WorldController : MonoBehaviour
     });
 
 
-    doorFactory.AddBuildRule((tile, factory) => 
+    doorFactory.AddBuildRule((tile, factory) =>
     {
       if (tile.Type != Tile.TileType.Floor)
         return false;
@@ -141,6 +166,7 @@ public class WorldController : MonoBehaviour
 
     doorFactory.BuildSound = "welding";
   }
+
 
   #endregion
 }

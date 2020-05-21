@@ -31,7 +31,7 @@ public class BuildController : MonoBehaviour, IHandle<DragEvent>
   List<GameObject> _dragPreview = new List<GameObject>();
 
   GameObjectFactory _objectFactory;
-  World _world;
+  //World _world;
 
   BuildAction _buildAction = BuildAction.Nothing;
   private string _resourceType;
@@ -61,66 +61,60 @@ public class BuildController : MonoBehaviour, IHandle<DragEvent>
       if (message.From == message.To && _buildAction == BuildAction.Resource)
       {
         IoC.Get<BuildingResourceController>().CreateResource(_resourceType, message.From);
-        
+
         return;
       }
 
       ClearDragPreview();
 
-      //Debug.Log($"From = {_dragFrom.Position}  to  = {_dragTo.Position}");
-
       //  TODO - remove test => needs to go to job que
-      var tiles = from p in GetPostitions(_dragFrom, _dragTo)
-                  select _world.GetTile(p);
+      var tiles = IoC.Get<WorldController>().GetTiles(_dragFrom, _dragTo);
 
       foreach (var tile in tiles)
       {
-        // Debug.Log($"flip tile @ {tile.Position}");
-        if (tile != null)
+        if (_buildAction == BuildAction.Floor)
         {
-          if (_buildAction == BuildAction.Floor)
+          tile.SetType(Tile.TileType.Floor);
+        }
+        else if (_buildAction == BuildAction.Destruct)
+        {
+          tile.SetType(Tile.TileType.Space);
+        }
+        else if (_buildAction == BuildAction.FixedObject)
+        {
+          //  check if we have resources
+          //var resource = _resources.FirstOrDefault(r => r.Type == _buildType && r.AmountLeft > 0);
+
+          //if (resource == null)
+          //{
+          //  //  no resources left
+          //  return;
+          //}
+
+          //resource.Reserve();
+
+          //  yes we can build a wall
+          var item = IoC.Get<ObjectFactory>().CreateItem(_buildType, tile);
+
+          if (item != null)
           {
-            tile.SetType(Tile.TileType.Floor);
-          }
-          else if (_buildAction == BuildAction.Destruct)
-          {
-            tile.SetType(Tile.TileType.Space);
-          }
-          else if (_buildAction == BuildAction.FixedObject)
-          {
-            //  check if we have resources
-            //var resource = _resources.FirstOrDefault(r => r.Type == _buildType && r.AmountLeft > 0);
-
-            //if (resource == null)
-            //{
-            //  //  no resources left
-            //  return;
-            //}
-
-            //resource.Reserve();
-
-            //  yes we can build a wall
-            var item = IoC.Get<ObjectFactory>().CreateItem(_buildType, tile);
-
-            if (item != null)
+            //  Create a job for it
+            IoC.Get<JobController>().AddJob(new Job
             {
-              //  Create a job for it
-              IoC.Get<JobController>().AddJob(new Job
-              {
-                Tile = tile,
-                Item = item,
-                BuildTime = item.Type == "Door" ? 0.5f : 1f
-              }) ;
+              Tile = tile,
+              Item = item,
+              BuildTime = item.Type == "Door" ? 0.5f : 1f
+            });
 
-              //  TODO ? jobcontroller
-              //new ItemUpdatedEvent { Item = item }.Publish();
-            }
-          }
-          else
-          {
-
+            //  TODO ? jobcontroller
+            //new ItemUpdatedEvent { Item = item }.Publish();
           }
         }
+        else
+        {
+
+        }
+
       }
 
       _dragFrom = null;
@@ -148,7 +142,6 @@ public class BuildController : MonoBehaviour, IHandle<DragEvent>
   {
     IoC.Get<EventAggregator>().Subscribe(this);
     _objectFactory = IoC.Get<GameObjectFactory>();
-    _world = IoC.Get<World>();
   }
 
   // Update is called once per frame
@@ -193,7 +186,8 @@ public class BuildController : MonoBehaviour, IHandle<DragEvent>
   {
     if (_dragTo != null)
     {
-      foreach (var position in GetPostitions(_dragFrom, _dragTo))
+      foreach (var position in Position.GetPositions(_dragFrom?.Position, _dragTo?.Position))
+      //GetPostitions(_dragFrom, _dragTo))
       {
         var prev = _objectFactory.Spawn(circleCursorPrefab, new Vector3(position.x, position.y), Quaternion.identity);
         //	set parent in hier. view
@@ -213,26 +207,26 @@ public class BuildController : MonoBehaviour, IHandle<DragEvent>
     _dragPreview.Clear();
   }
 
-  private IEnumerable<Position> GetPostitions(Tile from, Tile to)
-  {
-    if (from == null || to == null)
-      yield break;
+  //private IEnumerable<Position> GetPostitions(Tile from, Tile to)
+  //{
+  //  if (from == null || to == null)
+  //    yield break;
 
-    //  normalize
-    int fromX = Math.Min(from.Position.x, to.Position.x);
-    int toX = Math.Max(from.Position.x, to.Position.x);
+  //  //  normalize
+  //  int fromX = Math.Min(from.Position.x, to.Position.x);
+  //  int toX = Math.Max(from.Position.x, to.Position.x);
 
-    int fromY = Math.Min(from.Position.y, to.Position.y);
-    int toY = Math.Max(from.Position.y, to.Position.y);
+  //  int fromY = Math.Min(from.Position.y, to.Position.y);
+  //  int toY = Math.Max(from.Position.y, to.Position.y);
 
-    for (int x = fromX; x <= toX; x++)
-    {
-      for (int y = fromY; y <= toY; y++)
-      {
-        yield return new Position { x = x, y = y };
-      }
-    }
-  }
+  //  for (int x = fromX; x <= toX; x++)
+  //  {
+  //    for (int y = fromY; y <= toY; y++)
+  //    {
+  //      yield return new Position { x = x, y = y };
+  //    }
+  //  }
+  //}
 
 
   #endregion

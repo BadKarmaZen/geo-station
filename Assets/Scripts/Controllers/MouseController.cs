@@ -13,7 +13,7 @@ public class MouseController : MonoBehaviour
 
   Tile _startDragTile;
 
-  World _world;
+  WorldController _worldController;
 
   #endregion
 
@@ -24,7 +24,7 @@ public class MouseController : MonoBehaviour
   // Start is called before the first frame update
   void Start()
   {
-    _world = IoC.Get<World>();
+    _worldController = IoC.Get<WorldController>();
   }
 
   // Update is called once per frame
@@ -110,10 +110,8 @@ public class MouseController : MonoBehaviour
     return Camera.main.ScreenToWorldPoint(mouse);
   }
 
-  Tile GetTileAtWorldCoordinate(Vector3 coord)
-  {
-    return _world.GetTile(new Position(coord.x + 0.5f, coord.y + 0.5f));
-  }
+  Tile GetTileAtWorldCoordinate(Vector3 coord) => 
+    _worldController.GetTile(new Position(coord.x + 0.5f, coord.y + 0.5f));
 
   #endregion
 
