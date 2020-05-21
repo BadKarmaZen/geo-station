@@ -5,21 +5,15 @@ using UnityEngine;
 
 public class WorldController : MonoBehaviour
 {
-  #region Unity
-
-
-  #endregion
-
   #region Member
 
   World _world;
 
   Dictionary<(int x, int y), GameObject> _tiles = new Dictionary<(int x, int y), GameObject>();
 
-  //  TODO TEST
-  //public Character AstroBoy;
-
   #endregion
+
+  #region Unity
 
   public void Awake()
   {
@@ -34,8 +28,6 @@ public class WorldController : MonoBehaviour
 
     CreatePrototypes();
   }
-
-
 
   // Start is called before the first frame update
   void Start()
@@ -61,7 +53,21 @@ public class WorldController : MonoBehaviour
     _world.Update(Time.deltaTime);
   }
 
+  #endregion
+
+  #region Methods
+
+  public void NewWorld()
+  {
+    //  Creates a new world
+    //
+    _world = new World();
+
+  }
+  #endregion
+
   #region Helpers
+
   private void CreatePrototypes()
   {
     var objectFactory = IoC.Get<ObjectFactory>();
@@ -81,7 +87,6 @@ public class WorldController : MonoBehaviour
 
     doorFactory.AddAction(action: "OpenDoor", from: "Closed", transition: "Opening", to: "Opened", (Item item, float deltaTime) => 
     {
-      Debug.Log($"Opening ({item.ActionTime})");
       item.ActionTime += deltaTime;
 
       if (item.ActionTime >= 1f)  //  1 second
@@ -95,7 +100,6 @@ public class WorldController : MonoBehaviour
 
     doorFactory.AddAction(action: "CloseDoor", from: "Opened", transition: "Closing", to: "Closed", (Item item, float deltaTime) =>
     {
-      Debug.Log($"Closing ({item.ActionTime})");
       item.ActionTime += deltaTime;
 
       if (item.ActionTime >= 1f)  //  1 second
