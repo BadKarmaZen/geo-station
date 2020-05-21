@@ -43,5 +43,15 @@ public class ObjectFactory
     return _itemFactories[item.Type];
   }
 
+  internal ItemFactory GetFactory(string type)
+  {
+    if (!_itemFactories.ContainsKey(type))
+    {
+      Debug.LogError($"no factory found for {type}");
+    }
+
+    return _itemFactories[type];
+  }
+
   #endregion
 }

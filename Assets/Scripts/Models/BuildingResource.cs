@@ -11,13 +11,12 @@ public class BuildingResourceUpdatedEvent : Event
 public class BuildingResource
 {
   //  todo debug
-  static int nextId = 1;
+  static long nextId = 1;
 
-  public int Id { get; private set; }
-
-  public string Type { get; private set; }
-  public int Amount { get; private set; }
-  public int AmountReserved { get; private set; }
+  public long Id { get; set; }
+  public string Type { get; set; }
+  public int Amount { get; set; }
+  public int AmountReserved { get; set; }
   public int AmountLeft => Amount - AmountReserved;
   public Tile Tile { get; set; }
 
@@ -29,8 +28,7 @@ public class BuildingResource
     AmountReserved = 0;
     Tile = tile;
 
-    //Debug.Log($"BuildingResource.Create: {Type}_{Id}.(a = {Amount}, r={AmountReserved}) => {AmountLeft}");
-    new BuildingResourceUpdatedEvent { Resource = this }.Publish();
+    //Debug.Log($"BuildingResource.Create: {Type}_{Id}.(a = {Amount}, r={AmountReserved}) => {AmountLeft}");    
   }
 
   public void Reserve()
@@ -53,4 +51,28 @@ public class BuildingResource
       new BuildingResourceUpdatedEvent { Resource = this }.Publish();
     }
   }
+
+  public BuildingResourceData ToData() => new BuildingResourceData 
+  {
+    id = Id,
+    type = Type,
+    x = Tile.Position.x,
+    y = Tile.Position.y,
+    amount = Amount,
+    amount_reserved = AmountReserved
+  };
+
+}
+
+[Serializable]
+public class BuildingResourceData
+{
+  public long id;
+  public string type;
+  public int x;
+  public int y;
+  public int amount;
+  public int amount_reserved;
+
+
 }

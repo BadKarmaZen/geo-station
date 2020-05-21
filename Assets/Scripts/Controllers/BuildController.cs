@@ -60,7 +60,7 @@ public class BuildController : MonoBehaviour, IHandle<DragEvent>
       //  TODO - TEST
       if (message.From == message.To && _buildAction == BuildAction.Resource)
       {
-        IoC.Get<BuildingResourceController>().CreateResource(_resourceType, message.From);
+        IoC.Get<WorldController>().CreateResource(_resourceType, message.From);
 
         return;
       }
@@ -99,10 +99,10 @@ public class BuildController : MonoBehaviour, IHandle<DragEvent>
           if (item != null)
           {
             //  Create a job for it
-            IoC.Get<JobController>().AddJob(new Job
+            IoC.Get<WorldController>().CreateJob(new Job
             {
               Tile = tile,
-              Item = item,
+              Item = item.Type,
               BuildTime = item.Type == "Door" ? 0.5f : 1f
             });
 

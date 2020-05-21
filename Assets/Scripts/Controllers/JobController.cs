@@ -4,12 +4,6 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-public class JobUpdateEvent : Event
-{
-  public Job Job { get; set; }
-  public Character Worker { get; set; }
-}
-
 public class JobController : MonoBehaviour
   , IHandle<WorldUpdateEvent>
   , IHandle<JobUpdateEvent>
@@ -19,11 +13,13 @@ public class JobController : MonoBehaviour
   ResourceCollection _resourceCollection;
   Dictionary<Job, GameObject> _jobGraphics = new Dictionary<Job, GameObject>();
 
-  bool updateWorkForce;
+  //WorldController _worldController;
 
-  List<Job> _scheduledJob = new List<Job>();
-  List<Character> _freeWorkers = new List<Character>();
-  List<Character> _activeWorkers = new List<Character>();
+  //bool updateWorkForce;
+
+  //List<Job> _scheduledJob = new List<Job>();
+  //List<Character> _freeWorkers = new List<Character>();
+  //List<Character> _activeWorkers = new List<Character>();
 
   #endregion
 
@@ -39,12 +35,34 @@ public class JobController : MonoBehaviour
       {
         Destroy(job);
       }
-      _scheduledJob = new List<Job>();
-      _freeWorkers = new List<Character>();
-      _activeWorkers = new List<Character>();
 
       _jobGraphics = new Dictionary<Job, GameObject>();
     }
+  }
+  public void OnHandle(JobUpdateEvent message)
+  {
+    if (message.Job.IsCompleted())
+    {
+      RemoveGraphics(message.Job);
+    }
+    else
+    {
+      CreateGraphics(message.Job);
+    }
+    //// updateWorkForce = true;
+    // ////  free worker
+    // //_activeWorkers.Remove(message.Worker);
+    // //_freeWorkers.Add(message.Worker);
+
+    // //  finish job
+    // var job = message.Job;
+
+    // //  TODO - replace
+    // //job.Tile.InstallFixedObject(job.FixedObject);
+    // job.Tile.InstallItemOnTile(job.Item);
+    // //job.Tile.JobScheduled = false;
+
+    // RemoveGraphics(job);
   }
 
   #endregion
@@ -54,31 +72,31 @@ public class JobController : MonoBehaviour
   void Awake()
   {
     IoC.RegisterInstance(this);
+    IoC.Get<EventAggregator>().Subscribe(this);
+
+    _resourceCollection = new ResourceCollection("Jobs");
   }
 
   // Start is called before the first frame update
   void Start()
   {
-    IoC.Get<EventAggregator>().Subscribe(this);
-
-    _resourceCollection = new ResourceCollection("Jobs");
   }
 
   // Update is called once per frame
   void Update()
   {
     //  Start Job if needed
-    StartJob();
+    //StartJob();
 
-    if (_activeWorkers.Count != 0)
-    {
-      foreach (var worker in _activeWorkers)
-      {
-        worker.Update(Time.deltaTime);
-      }
-    }
+    //if (_activeWorkers.Count != 0)
+    //{
+    //  foreach (var worker in _activeWorkers)
+    //  {
+    //    worker.Update(Time.deltaTime);
+    //  }
+    //}
 
-    UpdateWorkForce();
+    //UpdateWorkForce();
 
     //if (_currentJob != null)
     //{
@@ -96,18 +114,22 @@ public class JobController : MonoBehaviour
 
   #region Methods
 
-  public void AddJob(Job job)
-  {
-    AddGraphics(job);
+  //public void AddJob(Job job)
+  //{   
+  //  CreateGraphics(job);
 
-    job.Tile.JobScheduled = true;
-    _scheduledJob.Add(job);
-  }
+  //  IoC.Get<WorldController>().AddJob(job);
 
-  private void AddGraphics(Job job)
+
+
+  //  job.Tile.JobScheduled = true;
+  //}
+
+  private void CreateGraphics(Job job)
   {
     var graphic = new GameObject();
-    graphic.name = $"{job.Item.Type}_{job.Tile.Position}";
+    //graphic.name = $"{job.Item.Type}_{job.Tile.Position}";
+    graphic.name = $"{job.Item}_{job.Tile.Position}";
     graphic.transform.position = job.Tile.Position.GetVector();
     graphic.transform.SetParent(this.transform, true);
 
@@ -120,27 +142,30 @@ public class JobController : MonoBehaviour
     //audio.transform.position = job.Tile.Position.GetVector();
     //audio.transform.SetParent(this.transform, true);
 
+    //  TODO SOUND
     //  doesn't seem to be working correct
-    job.AudioSource = graphic.AddComponent<AudioSource>();
+    //job.AudioSource = graphic.AddComponent<AudioSource>();
 
-    // get sound
-    var factory = IoC.Get<ObjectFactory>().GetFactory(job.Item);
-    job.AudioSource.clip = Resources.Load<AudioClip>($"Sounds/{factory.BuildSound}"); ;
+    //// get sound
+    //var factory = IoC.Get<ObjectFactory>().GetFactory(job.Item);
+    //job.AudioSource.clip = Resources.Load<AudioClip>($"Sounds/{factory.BuildSound}"); ;
 
-    //job.AudioSource.loop = true;
-    job.AudioSource.volume = 0.1f;
-    job.AudioSource.spatialBlend = 1.0f;
-    job.AudioSource.rolloffMode = AudioRolloffMode.Linear;
-    job.AudioSource.minDistance = 5;
-    job.AudioSource.maxDistance = 11.5f;
+    ////job.AudioSource.loop = true;
+    //job.AudioSource.volume = 0.1f;
+    //job.AudioSource.spatialBlend = 1.0f;
+    //job.AudioSource.rolloffMode = AudioRolloffMode.Linear;
+    //job.AudioSource.minDistance = 5;
+    //job.AudioSource.maxDistance = 11.5f;
   }
 
   private string GetSpriteName(Job job)
   {
-    var spriteName = job.Item.Type + "_";
+    //var spriteName = job.Item.Type + "_";
+    var spriteName = job.Item + "_";
 
     //  TODO improve
-    if (job.Item.Type == Item.Door)
+    //if (job.Item.Type == Item.Door)
+    if (job.Item == Item.Door)
     {
       var factory = IoC.Get<ObjectFactory>().GetFactory(job.Item);
 
@@ -189,82 +214,65 @@ public class JobController : MonoBehaviour
     }
   }
 
-  void StartJob()
-  {
-    if (_scheduledJob.Count > 0 && _freeWorkers.Count > 0)
-    {
-      //  TODO find worker (nearest to job, resource ...)
+  //void StartJob()
+  //{
+  //  if (_scheduledJob.Count > 0 && _freeWorkers.Count > 0)
+  //  {
+  //    //  TODO find worker (nearest to job, resource ...)
 
-      for (int workId = 0; workId < _freeWorkers.Count; workId++)
-      {
-        if (_freeWorkers[workId].AssignJob(_scheduledJob[0]))
-        {
-          //  success
-          var worker = _freeWorkers[workId];
-          _freeWorkers.Remove(worker);
-          _activeWorkers.Add(worker);
+  //    for (int workId = 0; workId < _freeWorkers.Count; workId++)
+  //    {
+  //      if (_freeWorkers[workId].AssignJob(_scheduledJob[0]))
+  //      {
+  //        //  success
+  //        var worker = _freeWorkers[workId];
+  //        _freeWorkers.Remove(worker);
+  //        _activeWorkers.Add(worker);
 
-          _scheduledJob.RemoveAt(0);
+  //        _scheduledJob.RemoveAt(0);
 
-          return;
-        }
-      }
+  //        return;
+  //      }
+  //    }
 
-      //  none of the free workers could do the job
-      //  remove and add to back
-      Debug.LogWarning("none of the free workers could do the job");
-      var job = _scheduledJob[0];
-      //job.Retry++;
+  //    //  none of the free workers could do the job
+  //    //  remove and add to back
+  //    Debug.LogWarning("none of the free workers could do the job");
+  //    var job = _scheduledJob[0];
+  //    //job.Retry++;
 
-      if (_activeWorkers.Count > 0/* job.Retry < 3*/)
-      {
-        //  Still workers busy
-        _scheduledJob.Add(job);
-      }
-      else
-      {
-        //  TODO
-        //  job is delete
-        //  
-        //job.Tile.CannotCompleteJob(job.FixedObject);
-      }
-      _scheduledJob.RemoveAt(0);
-    }
-  }
+  //    if (_activeWorkers.Count > 0/* job.Retry < 3*/)
+  //    {
+  //      //  Still workers busy
+  //      _scheduledJob.Add(job);
+  //    }
+  //    else
+  //    {
+  //      //  TODO
+  //      //  job is delete
+  //      //  
+  //      //job.Tile.CannotCompleteJob(job.FixedObject);
+  //    }
+  //    _scheduledJob.RemoveAt(0);
+  //  }
+  //}
 
-  public void AddWorker(Character worker)
-  {
-    _freeWorkers.Add(worker);
-  }
+  //public void AddWorker(Character worker)
+  //{
+  //  _freeWorkers.Add(worker);
+  //}
 
-  public void OnHandle(JobUpdateEvent message)
-  {
-    updateWorkForce = true;
-    ////  free worker
-    //_activeWorkers.Remove(message.Worker);
-    //_freeWorkers.Add(message.Worker);
 
-    //  finish job
-    var job = message.Job;
+  //void UpdateWorkForce()
+  //{
+  //  if (updateWorkForce)
+  //  {
+  //    updateWorkForce = false;
 
-    //  TODO - replace
-    //job.Tile.InstallFixedObject(job.FixedObject);
-    job.Tile.InstallItemOnTile(job.Item);
-    //job.Tile.JobScheduled = false;
-
-    RemoveGraphics(job);
-  }
-
-  void UpdateWorkForce()
-  {
-    if (updateWorkForce)
-    {
-      updateWorkForce = false;
-
-      _freeWorkers.AddRange(_activeWorkers.FindAll(w => w.CurrentJob == null));
-      _activeWorkers.RemoveAll(w => w.CurrentJob == null);
-    }
-  }
+  //    _freeWorkers.AddRange(_activeWorkers.FindAll(w => w.CurrentJob == null));
+  //    _activeWorkers.RemoveAll(w => w.CurrentJob == null);
+  //  }
+  //}
 
   #endregion
 

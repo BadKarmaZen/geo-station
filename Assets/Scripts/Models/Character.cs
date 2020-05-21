@@ -25,9 +25,14 @@ public class Character
   private Stack<Tile> _path = null;
 
 
+
+
+
   #endregion
 
   #region Properties
+
+  public World World { get; set; }
 
   public Tile CurrentTile { get; set; }
   public Tile DestinationTile { get; set; }
@@ -61,7 +66,7 @@ public class Character
     }
   }
 
-  public BuildingResource SelectedResourcePile { get; private set; }
+  public BuildingResource SelectedResourcePile { get; set; }
   public bool HasResource { get; set; }
 
   #endregion
@@ -106,7 +111,6 @@ public class Character
     {
       if (DestinationTile == null)
       {
-        Debug.Log($"move idle");
         MoveIdle();
       }
 
@@ -132,15 +136,16 @@ public class Character
       {
         if (CurrentJob.ProcessJob(deltaTime))
         {
+          HasResource = false;
+
           //  job is completed
           new JobUpdateEvent
           {
-            Worker = this,
+            //Worker = this,
             Job = CurrentJob
           }.Publish();
 
           CurrentJob = null;
-          HasResource = false;
         }
 
         //  animate handes
@@ -176,7 +181,8 @@ public class Character
         Debug.Log($"we do not have a resource yet: find resources");
 
         //  find resources
-        SelectedResourcePile = IoC.Get<BuildingResourceController>().SelectResourcePile(CurrentJob.Item.Type);
+        //SelectedResourcePile = World.SelectResourcePile(CurrentJob.Item.Type);
+        SelectedResourcePile = World.SelectResourcePile(CurrentJob.Item);
         if (SelectedResourcePile != null)
         {
           SelectedResourcePile.Reserve();
@@ -314,42 +320,18 @@ public class Character
     }
   }
 
-  public bool AssignJob(Job job)
+  public void AssignJob(Job job)
   {
     if (CurrentJob != null)
     {
       Debug.LogError($"Already has job");
-      return false;
+      return;
     }
 
     Debug.Log($"Assign new job");
 
     CurrentJob = job;
-    return true;
-
-    ////  get resource for job
-
-    //var resource = IoC.Get<BuildingResourceController>().SelectResourcePile(job.FixedObject.Type);
-    //if (resource == null)
-    //{
-
-
-    //}
-
-    //job.FixedObject.Type
-
-
-    //{
-    //  //  first need to got to resource then to job
-
-    //  if (SetDestination(job.ResourcePile.Tile))
-    //  {
-    //    CurrentJob = job;
-    //    return true;
-    //  }
-    //}
-
-    //return false;
+    CurrentJob.Busy = true;
   }
 
   public bool SetDestination(Tile tile)
@@ -382,4 +364,23 @@ public class Character
   }
   #endregion
 
+  public CharacterData ToData() => new CharacterData
+  {
+    x = CurrentTile.Position.x,
+    y = CurrentTile.Position.y,
+    has_resource = HasResource,
+    job_id = CurrentJob?.Id ?? 0,
+    resource_id = SelectedResourcePile?.Id ?? 0
+  };
+}
+
+[Serializable]
+public class CharacterData
+{
+  //public string name;
+  public int x;
+  public int y;
+  public bool has_resource;
+  public long job_id;
+  public long resource_id;
 }

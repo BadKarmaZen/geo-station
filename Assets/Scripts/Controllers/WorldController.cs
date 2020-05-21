@@ -3,6 +3,10 @@ using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
+using System.IO;
+using Unity.Collections;
+using UnityEngine.UIElements;
 
 public class WorldUpdateEvent : Event
 {
@@ -18,6 +22,8 @@ public class WorldController : MonoBehaviour
   World _world;
   Dictionary<(int x, int y), GameObject> _tiles = new Dictionary<(int x, int y), GameObject>();
 
+  static string _filename;
+
   #endregion
 
   #region Unity
@@ -26,6 +32,8 @@ public class WorldController : MonoBehaviour
   {
     Debug.Log("WorldController.Awake");
 
+    IoC.Initialize();
+
     IoC.RegisterType<GameObjectFactory>();
     IoC.RegisterType<ObjectFactory>();
     IoC.RegisterInstance(this);
@@ -33,13 +41,57 @@ public class WorldController : MonoBehaviour
     //  TODO : improve to some core location
     CreatePrototypes();
   }
+  public void OnEnable()
+  {
+    Debug.Log("WorldController.OnEnable");
 
-  internal World GetWorld() => _world;
+   
+  }
 
   // Start is called before the first frame update
   void Start()
   {
+    Debug.Log("WorldController.Start");
 
+    if (_filename != null)
+    {
+      var json = File.ReadAllText(_filename);
+      var saveGame = JsonUtility.FromJson<WorldData>(json);
+
+      _world = World.LoadSaveGame(saveGame);
+
+      //  World is create we need to create all the ui elemements
+
+      LoadUiElements();
+    }
+  }
+
+  private void LoadUiElements()
+  {
+    //  create tiles
+    foreach (var tile in _world.GetAllTiles(t => t != null))
+    {
+      new CreateTileEvent { Tile = tile }.Publish();
+      new TileUpdateEvent { Tile = tile }.Publish();
+    }
+
+    //  create characters
+    foreach (var character in _world.GetCharacters())
+    {
+      new CharacterCreatedEvent { Character = character }.Publish();
+    }
+
+    //  create jobs
+    foreach (var job in _world.GetJobs())
+    {
+      new JobUpdateEvent { Job = job }.Publish();
+    }
+
+    //  create resources
+    foreach (var resource  in _world.GetBuildiongResource())
+    {
+      new BuildingResourceUpdatedEvent { Resource = resource }.Publish();
+    }
   }
 
   // Update is called once per frame
@@ -52,20 +104,21 @@ public class WorldController : MonoBehaviour
 
   #region Methods
 
+  internal World GetWorld() => _world;
+
   public void NewWorld()
   {
     //  Creates a new world
     //
-
     new WorldUpdateEvent { Reset = true }.Publish();
 
-    _world = new World();
+    _world = new World(100, 100);
 
     Debug.Log("CreateWorldGame");
 
-    for (int x = 0; x < _world.Size.width; x++)
+    for (int x = 0; x < _world.Width; x++)
     {
-      for (int y = 0; y < _world.Size.height; y++)
+      for (int y = 0; y < _world.Height; y++)
       {
         var tile = _world.GetTile(new Position(x, y));
         if (tile == null) continue;
@@ -78,18 +131,48 @@ public class WorldController : MonoBehaviour
 
     //	center camera to the middle of the world view
     //
-    var center = new Position(_world.Size.width / 2, _world.Size.height / 2);
-    Camera.main.transform.position = new Vector3(_world.Size.width / 2, _world.Size.height / 2, Camera.main.transform.position.z);
+    var center = new Position(_world.Width / 2, _world.Height / 2);
+    Camera.main.transform.position = new Vector3(_world.Width / 2, _world.Height / 2, Camera.main.transform.position.z);
 
     var centerTile = _world.GetTile(center);
 
     for (int i = 0; i < 1; i++)
     {
-      var worker = _world.CreateCharacter(centerTile);
-      IoC.Get<EventAggregator>().Publish(new CharacterCreatedEvent { Character = worker });
-      IoC.Get<JobController>().AddWorker(worker);
+      new CharacterCreatedEvent { Character = _world.CreateCharacter(centerTile) }.Publish();
     }
+  }
 
+  internal void CreateResource(string resourceType, Tile tile)
+  {
+    var resource = _world.CreateBuildingResource(tile, resourceType);
+    new BuildingResourceUpdatedEvent { Resource = resource }.Publish();
+  }
+
+  public void LoadWorld()
+  {
+    new WorldUpdateEvent { Reset = true }.Publish();
+
+    SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+
+    _filename = @"d:\[unity]\geo.txt";
+  }
+
+
+
+  internal void CreateJob(Job job)
+  {
+    _world.AddJob(job);
+
+    new JobUpdateEvent { Job = job }.Publish();
+  }
+
+  public void SaveWorld()
+  {
+    var savegame = _world.CreateSaveGame();
+
+    var json = JsonUtility.ToJson(savegame, true);
+
+    File.WriteAllText(@"d:\[unity]\geo.txt", json);
   }
 
   #endregion

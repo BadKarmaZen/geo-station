@@ -214,6 +214,7 @@ public class SpriteController : MonoBehaviour
   {
     Debug.Log($"SpriteController.ctor");
     IoC.Get<EventAggregator>().Subscribe(this);
+    _resourceCollection = new ResourceCollection("Objects");
   }
 
   public Sprite floorSprite;
@@ -223,7 +224,6 @@ public class SpriteController : MonoBehaviour
   { 
     Debug.Log($"SpriteController.Start");
 
-    _resourceCollection = new ResourceCollection("Objects");
 
     //var world = IoC.Get<World>();
     //CreateWorldGame(world);

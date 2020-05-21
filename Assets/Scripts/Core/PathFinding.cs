@@ -31,11 +31,11 @@ public class PathFinding
 
   private void CreateGrid()
   {
-    _grid = new Node[_world.Size.width, _world.Size.height];
+    _grid = new Node[_world.Width, _world.Height];
 
-    for (int x = 0; x < _world.Size.width; x++)
+    for (int x = 0; x < _world.Width; x++)
     {
-      for (int y = 0; y < _world.Size.height; y++)
+      for (int y = 0; y < _world.Height; y++)
       {
         var tile = _world.GetTile(new Position(x, y));
         _grid[x, y] = new Node

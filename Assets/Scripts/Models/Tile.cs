@@ -36,7 +36,7 @@ public class Tile
 
   #region Properties
 
-  public TileType Type { get; protected set; } = TileType.Space;
+  public TileType Type { get; set; } = TileType.Space;
 
   public Item Item { get; set; }
 
@@ -45,7 +45,7 @@ public class Tile
 
   public World World { get; set; }
   public Position Position { get; set; }
-  public bool JobScheduled { get; internal set; }
+  public bool JobScheduled { get; set; }
 
   internal bool IsNeighbour(Tile tile)
   {
