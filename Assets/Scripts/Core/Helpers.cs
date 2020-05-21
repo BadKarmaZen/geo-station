@@ -72,6 +72,8 @@ public struct Position
     (bottomLeft: new Position(Mathf.Min(a.x,b.x), Mathf.Min(a.y,b.y)), 
      upperRight: new Position(Mathf.Max(a.x, b.x), Mathf.Max(a.y, b.y)));
 
+  public static float Distance(Position a, Position b) =>
+    Mathf.Sqrt(Mathf.Pow(a.x - b.x, 2) + Mathf.Pow(a.y - b.y, 2));
+
   #endregion
 }
-

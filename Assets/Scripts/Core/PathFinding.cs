@@ -24,7 +24,7 @@ public class PathFinding
 
   public PathFinding()
   {
-    _world = IoC.Get<World>();
+    _world = IoC.Get<WorldController>().GetWorld();
 
     CreateGrid();
   }

@@ -3,17 +3,16 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class TileUpdateEvent : Event
+
+public class CreateTileEvent : Event
 {
   public Tile Tile { get; set; }
 }
 
-//public class FixedObjectUpdateEvent
-//{
-//  public FixedObject FixedObject { get; set; }
-//  public bool UpdateOnly { get; set; }
-//  public bool JobFailed { get; internal set; }
-//}
+public class TileUpdateEvent : Event
+{
+  public Tile Tile { get; set; }
+}
 
 public class ItemUpdatedEvent : Event
 {
@@ -37,12 +36,10 @@ public class Tile
   #region Properties
 
   public TileType Type { get; protected set; } = TileType.Space;
-
-  //  TODO
-  //public FixedObject FixedObject { get; set; }
+  
   public Item Item { get; set; }
 
-  public MovableObject MovableObject { get; set; }
+  //public MovableObject MovableObject { get; set; }
 
 
   public World World { get; set; }
@@ -52,11 +49,6 @@ public class Tile
   internal bool IsNeighbour(Tile tile)
   {
     return Position.IsNorthOf(tile.Position) || Position.IsEastOf(tile.Position) || Position.IsSouthOf(tile.Position) || Position.IsWestOf(tile.Position);
-  }
-
-  internal static float Distance(Tile tileA, Tile tileB)
-  {
-    return Mathf.Sqrt(Mathf.Pow(tileA.Position.x - tileB.Position.x, 2) + Mathf.Pow(tileA.Position.y - tileB.Position.y, 2));
   }
 
   #endregion
@@ -94,55 +86,12 @@ public class Tile
 
     //  TODO is this the best place ?
 
-    Item.Installing = false;
+    //Item.Installing = false;
     JobScheduled = false;
 
     //  TODO Does this belong here
     new ItemUpdatedEvent { Item = item }.Publish();
   }
-
-  //public void InstallFixedObject(FixedObject fixedObject)
-  //{
-  //  //Debug.Log($"InstallFixedObject ({fixedObject})");
-
-  //  JobScheduled = false;
-  //  this.FixedObject = fixedObject;
-  //  FixedObject.Installing = false;
-
-  //  IoC.Get<EventAggregator>().Publish(new FixedObjectUpdateEvent { FixedObject = fixedObject });
-  //}
-
-
-  //public bool NorthOf(Tile tile)
-  //{
-  //  return Position == (tile.Position.x, tile.Position.y + 1);
-  //}
-
-  //internal bool EastOf(Tile tile)
-  //{
-  //  return Position == (tile.Position.x + 1, tile.Position.y);
-  //}
-
-  //internal bool SouthOf(Tile tile)
-  //{
-  //  return Position == (tile.Position.x, tile.Position.y - 1);
-  //}
-
-  //internal bool WestOf(Tile tile)
-  //{
-  //  return Position == (tile.Position.x - 1, tile.Position.y);
-  //}
-
-  //  Job failed
-  //internal void CannotCompleteJob(FixedObject fixedObject)
-  //{
-  //  IoC.Get<EventAggregator>().Publish(new FixedObjectUpdateEvent { FixedObject = fixedObject, JobFailed = true });
-
-  //  JobScheduled = false;
-  //  FixedObject = null;
-  //}
-
-
 
   #endregion
 

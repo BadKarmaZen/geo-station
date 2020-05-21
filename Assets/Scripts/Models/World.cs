@@ -19,6 +19,8 @@ public class World
 
   public World(int width = 100, int height = 100)
   {
+    Debug.Log($"Create World: Size {Size}");
+
     Size = (width, height);
 
     _tiles = new Tile[width, height];
@@ -30,9 +32,6 @@ public class World
         _tiles[x, y] = new Tile(this, new Position(x, y));
       }
     }
-
-
-    Debug.Log($"Create World: Size {Size}");
   }
 
   #endregion
@@ -51,7 +50,6 @@ public class World
       item.Update(deltaTime);
     }
   }
-
 
   public Tile GetTile(Position position)
   {

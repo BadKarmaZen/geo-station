@@ -5,6 +5,7 @@ using System.Linq;
 using UnityEngine;
 
 public class SpriteController : MonoBehaviour
+  , IHandle<CreateTileEvent>
   , IHandle<TileUpdateEvent>
   , IHandle<ItemUpdatedEvent>
   , IHandle<BuildingResourceUpdatedEvent>
@@ -21,6 +22,15 @@ public class SpriteController : MonoBehaviour
   #endregion
 
   #region Events
+  public void OnHandle(CreateTileEvent message)
+  {
+    GameObject goTile = new GameObject();
+    _tileGraphics.Add(message.Tile.Position, goTile);
+    goTile.name = $"Tile_{message.Tile.Position}";
+    goTile.transform.position = message.Tile.Position.GetVector();
+    goTile.transform.SetParent(this.transform, true);
+    goTile.AddComponent<SpriteRenderer>();
+  }
 
   public void OnHandle(TileUpdateEvent message)
   {
@@ -126,28 +136,28 @@ public class SpriteController : MonoBehaviour
 
   #region Methods
 
-  public void CreateWorldGame(World world)
-  {
-    Debug.Log("CreateWorldGame");
+  //public void CreateWorldGame(World world)
+  //{
+  //  Debug.Log("CreateWorldGame");
 
-    for (int x = 0; x < world.Size.width; x++)
-    {
-      for (int y = 0; y < world.Size.height; y++)
-      {
-        var tile = world.GetTile(new Position(x, y));
-        if (tile == null) continue;
+  //  for (int x = 0; x < world.Size.width; x++)
+  //  {
+  //    for (int y = 0; y < world.Size.height; y++)
+  //    {
+  //      var tile = world.GetTile(new Position(x, y));
+  //      if (tile == null) continue;
 
-        GameObject goTile = new GameObject();
-        _tileGraphics.Add(tile.Position, goTile);
-        goTile.name = $"Tile_{x}_{y}";
-        goTile.transform.position = new Vector3(tile.Position.x, tile.Position.y);
-        goTile.transform.SetParent(this.transform, true);
-        goTile.AddComponent<SpriteRenderer>();
-      }
-    }
+  //      GameObject goTile = new GameObject();
+  //      _tileGraphics.Add(tile.Position, goTile);
+  //      goTile.name = $"Tile_{x}_{y}";
+  //      goTile.transform.position = new Vector3(tile.Position.x, tile.Position.y);
+  //      goTile.transform.SetParent(this.transform, true);
+  //      goTile.AddComponent<SpriteRenderer>();
+  //    }
+  //  }
 
-    Debug.Log("CreateWorldGame.Done");
-  }
+  //  Debug.Log("CreateWorldGame.Done");
+  //}
 
   #endregion
 
@@ -168,9 +178,9 @@ public class SpriteController : MonoBehaviour
 
     _resourceCollection = new ResourceCollection("Objects");
 
-    var world = IoC.Get<World>();
-    CreateWorldGame(world);
-    world.Randomioze();
+    //var world = IoC.Get<World>();
+    //CreateWorldGame(world);
+    //world.Randomioze();
   }
 
   // Update is called once per frame
@@ -207,17 +217,10 @@ public class SpriteController : MonoBehaviour
 
   private string BuildItemSpriteName(Item item)
   {
-  //  if (item.Installing)
-  //    return item.Type + "Job_";
-
-
     var spriteName = item.Type + "_";
     var factory = IoC.Get<ObjectFactory>().GetFactory(item);
 
-    //  check surrounding tiles
-    var neighbours = from t in IoC.Get<World>().GetNeighbourTiles(item.Tile)
-                     where factory.IsValidNeighbour( t.Item?.Type)
-                     select t;
+    var neighbours = IoC.Get<WorldController>().GetNeighbourTiles(item.Tile, tile => factory.IsValidNeighbour(tile.Item?.Type));
 
     foreach (var neighbour in neighbours)
     {
@@ -245,15 +248,14 @@ public class SpriteController : MonoBehaviour
   //  TODO : ? move to job
   private void NotifyNeighbours(Item item)
   {
-    var neighbours = from t in IoC.Get<World>().GetNeighbourTiles(item.Tile)
-                     where t.Item != null
-                     select t;
+    var neighbours = IoC.Get<WorldController>().GetNeighbourTiles(item.Tile, tile => tile.Item != null);
 
     foreach (var neighbour in neighbours)
     {
       new ItemUpdatedEvent { Item = neighbour.Item, UpdateOnly = true }.Publish();
     }
   }
+
 
   #endregion
 }

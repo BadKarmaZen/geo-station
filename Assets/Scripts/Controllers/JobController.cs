@@ -121,9 +121,10 @@ public class JobController : MonoBehaviour, IHandle<JobUpdateEvent>
       var factory = IoC.Get<ObjectFactory>().GetFactory(job.Item);
 
       //  check surrounding tiles
-      var neighbours = from t in IoC.Get<World>().GetNeighbourTiles(job.Tile)
-                       where factory.IsValidNeighbour(t.Item?.Type)
-                       select t;
+      var neighbours = IoC.Get<WorldController>().GetNeighbourTiles(job.Tile, tile => factory.IsValidNeighbour(tile.Item?.Type));
+        //from t in IoC.Get<World>().GetNeighbourTiles(job.Tile)
+        //               where 
+        //               select t;
 
       foreach (var neighbour in neighbours)
       {

@@ -24,15 +24,51 @@ public class WorldController : MonoBehaviour
     IoC.RegisterType<ObjectFactory>();
     IoC.RegisterInstance(this);
 
-    _world = new World();
-    IoC.RegisterInstance(_world);
+    //_world = new World();
+    //IoC.RegisterInstance(_world);
 
     CreatePrototypes();
   }
 
+  internal World GetWorld() => _world;
+
   // Start is called before the first frame update
   void Start()
   {
+   
+  }
+
+  // Update is called once per frame
+  void Update()
+  {
+    _world?.Update(Time.deltaTime);
+  }
+
+  #endregion
+
+  #region Methods
+
+  public void NewWorld()
+  {
+    //  Creates a new world
+    //
+    _world = new World();
+
+    Debug.Log("CreateWorldGame");
+
+    for (int x = 0; x < _world.Size.width; x++)
+    {
+      for (int y = 0; y < _world.Size.height; y++)
+      {
+        var tile = _world.GetTile(new Position(x, y));
+        if (tile == null) continue;
+
+        new CreateTileEvent { Tile = tile }.Publish();
+      }
+    }
+
+    Debug.Log("CreateWorldGame.Done");
+
     //	center camera to the middle of the world view
     //
     var center = new Position(_world.Size.width / 2, _world.Size.height / 2);
@@ -46,23 +82,6 @@ public class WorldController : MonoBehaviour
       IoC.Get<EventAggregator>().Publish(new CharacterCreatedEvent { Character = worker });
       IoC.Get<JobController>().AddWorker(worker);
     }
-  }
-
-  // Update is called once per frame
-  void Update()
-  {
-    _world.Update(Time.deltaTime);
-  }
-
-  #endregion
-
-  #region Methods
-
-  public void NewWorld()
-  {
-    //  Creates a new world
-    //
-    _world = new World();
 
   }
 
@@ -70,11 +89,21 @@ public class WorldController : MonoBehaviour
 
 
   #region Helper Methods
-   
+
+  internal IEnumerable<Tile> GetNeighbourTiles(Tile tile, Func<Tile, bool> predicate = null)
+  {
+    var tiles = _world.GetNeighbourTiles(tile);
+    if (predicate != null)
+    {
+      tiles = tiles.Where(predicate);
+    }
+    return tiles;
+  }
+
   public IEnumerable<Tile> GetTiles(Tile fromTile, Tile toTile)
   {
     if (fromTile == null || toTile == null)
-        yield break;
+      yield break;
 
     foreach (var position in Position.GetPositions(fromTile.Position, toTile.Position))
     {
@@ -101,8 +130,8 @@ public class WorldController : MonoBehaviour
     var wallFactory = objectFactory.CreateFactory(new Item(Item.Wall, 0f));
     wallFactory.AddBuildRule((tile, factory) =>
    {
-      //  a wall must be build on a floor tile
-      return tile.Type == Tile.TileType.Floor;
+     //  a wall must be build on a floor tile
+     return tile.Type == Tile.TileType.Floor;
    });
 
     wallFactory.BuildSound = "welding";
@@ -166,7 +195,6 @@ public class WorldController : MonoBehaviour
 
     doorFactory.BuildSound = "welding";
   }
-
 
   #endregion
 }

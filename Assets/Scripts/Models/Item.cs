@@ -19,6 +19,9 @@ public class Item
 
   #region Members
 
+  //  Component Model
+  Dictionary<string, object> _itemParameters = new Dictionary<string, object>();
+  Action<Item> _updateAction;
 
   #endregion
 
@@ -31,7 +34,7 @@ public class Item
   //	cost to move over object
   public float MovementCost { get; protected set; }
 
-  public bool Installing { get; internal set; }
+  //public bool Installing { get; internal set; }
 
   //  Actions
   public string CurrentState { get; set; }
@@ -60,6 +63,12 @@ public class Item
     MovementCost = prototype.MovementCost;
     CurrentState = prototype.CurrentState;
 
+    //  copy parameters
+    foreach (var param  in _itemParameters)
+    {
+      _itemParameters.Add(param.Key, param.Value);
+    }
+
     Factory = factory;
     Tile = tile;
   }
@@ -82,6 +91,8 @@ public class Item
 
   public void Update(float deltaTime)
   {
+    _updateAction?.Invoke(this);
+
     if (CurrentAction != null)
     {
       if (CurrentAction.UpdateAction(this, deltaTime) == true)

@@ -88,9 +88,7 @@ public class Character
   {
     if (DestinationTile == null)
     {
-      var tiles = (from t in IoC.Get<World>().GetNeighbourTiles(CurrentTile)
-                   where t.Type == Tile.TileType.Floor
-                   select t).ToList();
+      var tiles = IoC.Get<WorldController>().GetNeighbourTiles(CurrentTile, tile => tile.Type == Tile.TileType.Floor).ToList();
 
       if (tiles.Count != 0)
       {
@@ -249,7 +247,7 @@ public class Character
 
     if (NextTile != null)
     {
-      float totalDistance = Tile.Distance(CurrentTile, NextTile);
+      float totalDistance = Position.Distance(CurrentTile.Position, NextTile.Position);
       float incrementDistance = Speed * deltaTime;
       float percentage = incrementDistance / totalDistance;
 
