@@ -31,7 +31,7 @@ public class Item
   public float MovementCost { get; protected set; }
 
   //  Component Model
-  public Dictionary<string, object> Parameters { get; set; }
+  public Dictionary<string, float> Parameters { get; set; }
   public Action<Item, float> UpdateActions;
   public Func<Item, Enterable> IsEnterable = _ => Enterable.Never;
 
@@ -52,7 +52,7 @@ public class Item
     Type = type;
     MovementCost = movement;
 
-    Parameters = new Dictionary<string, object>();
+    Parameters = new Dictionary<string, float>();
   }
 
   public Item(Item prototype, Tile tile, ItemFactory factory)
@@ -60,7 +60,7 @@ public class Item
     Type = prototype.Type;
     MovementCost = prototype.MovementCost;
 
-    Parameters = new Dictionary<string, object>();
+    Parameters = new Dictionary<string, float>();
 
     //  copy parameters
     foreach (var param in prototype.Parameters)
@@ -85,10 +85,10 @@ public class Item
   #endregion
 
   #region Helper
-  public T GetParameter<T>(string parameter) => (T)Parameters[parameter];
+  //public T GetParameter<T>(string parameter) => (T)Parameters[parameter];
 
-  public void UpdateParameters<T>(string parameter, Func<T, T> update) =>
-    Parameters[parameter] = update(GetParameter<T>(parameter));
+  //public void UpdateParameters<T>(string parameter, Func<T, T> update) =>
+  //  Parameters[parameter] = update(GetParameter<T>(parameter));
 
   #endregion
 }

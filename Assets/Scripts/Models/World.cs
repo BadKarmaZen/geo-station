@@ -14,8 +14,9 @@ public class World
   public int Height;
 
   private Tile[,] _tiles;
-  private List<Character> _characters;
-  private List<Item> _items;
+  private List<Character> _characters = new List<Character>();
+  private List<Item> _items = new List<Item>();
+  private List<Room> _rooms = new List<Room>();
 
   #endregion
 
@@ -29,10 +30,6 @@ public class World
 
   public World()
   {
-    _characters = new List<Character>();
-    _items = new List<Item>();
-    _jobs = new List<Job>();
-
     IsPaused = true;
   }
 
@@ -102,7 +99,7 @@ public class World
   #region Jobs
 
   private long _nextJobId = 1;
-  private List<Job> _jobs;
+  private List<Job> _jobs = new List<Job>();
 
   public void AddJob(Job job)
   {

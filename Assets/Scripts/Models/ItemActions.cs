@@ -10,28 +10,27 @@ public static class ItemActions
 
   public static void DoorUpdateAction(Item item, float deltaTime)
   {
-    if (item.GetParameter<bool>("is_opening"))
+    if (item.Parameters["is_opening"] >= 1)
     {
-      item.UpdateParameters<float>("openness", value => value + (deltaTime * 2f));
+      item.Parameters["openness"] += deltaTime * 2f;
 
-      if (item.GetParameter<float>("openness") >= 1)
-        item.UpdateParameters<bool>("is_opening", _ => false);
+      if (item.Parameters["openness"] >= 1)
+        item.Parameters["is_opening"] = 0;
     }
     else
     {
-      item.UpdateParameters<float>("openness", value => value - (deltaTime * 2f));
+      item.Parameters["openness"] -= deltaTime * 2f;
     }
 
-
-    item.UpdateParameters<float>("openness", value => Mathf.Clamp01(value));
+    item.Parameters["openness"] = Mathf.Clamp01(item.Parameters["openness"]);
   }
 
   public static Enterable DoorIsEnterable(Item item)
   {
     //  auto matic open request door to open
-    item.UpdateParameters<bool>("is_opening", _ => true);
+    item.Parameters["is_opening"] = 1f;
 
-    return item.GetParameter<float>("openness") >= 1 ? Enterable.Yes : Enterable.Soon;
+    return item.Parameters["openness"] >= 1 ? Enterable.Yes : Enterable.Soon;
   }
 
   #endregion

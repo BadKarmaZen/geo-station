@@ -256,7 +256,7 @@ public class SpriteController : MonoBehaviour
       {
         var renderer = graphic.GetComponent<SpriteRenderer>();
 
-        var openness = item.GetParameter<float>("openness");
+        var openness = item.Parameters["openness"];
 
         if (openness < 0.1f)  // door is closed
         {

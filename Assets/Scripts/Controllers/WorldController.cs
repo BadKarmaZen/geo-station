@@ -147,7 +147,7 @@ public class WorldController : MonoBehaviour
 
     var centerTile = _world.GetTile(center);
 
-    for (int i = 0; i < 1; i++)
+    for (int i = 0; i < 5; i++)
     {
       new CharacterCreatedEvent { Character = _world.CreateCharacter(centerTile) }.Publish();
     }
@@ -239,10 +239,11 @@ public class WorldController : MonoBehaviour
     //  wall
     var wallFactory = objectFactory.CreateFactory(new Item(Item.Wall, 0f));
     wallFactory.AddBuildRule((tile, factory) =>
-   {
-     //  a wall must be build on a floor tile and must be empty
-     return tile.Type == Tile.TileType.Floor && tile.Item == null;
-   });
+    {
+      return tile.Type == Tile.TileType.Floor &&  //  a wall must be build on a floor tile  and
+             tile.Item == null &&                 //  must be empty and
+             tile.ActiveJob == null;              //  no job active
+    });
 
     wallFactory.BuildSound = "welding";
 
@@ -250,13 +251,13 @@ public class WorldController : MonoBehaviour
     var doorFactory = objectFactory.CreateFactory(doorPrototype, Item.Wall);
 
     doorPrototype.Parameters["openness"] = 0f;
-    doorPrototype.Parameters["is_opening"] = true;
+    doorPrototype.Parameters["is_opening"] = 0f;
     doorPrototype.UpdateActions += ItemActions.DoorUpdateAction;
     doorPrototype.IsEnterable = ItemActions.DoorIsEnterable;
 
     doorFactory.AddBuildRule((tile, factory) =>
     {
-      if (tile.Type != Tile.TileType.Floor || tile.Item != null)
+      if (tile.Type != Tile.TileType.Floor || tile.Item != null || tile.ActiveJob != null)
         return false;
 
       //  door must have wall to north & south, or east & west
