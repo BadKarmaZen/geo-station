@@ -1,24 +1,33 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.Playables;
 
-public class CreateTileEvent : Event
+#region Events
+
+public class TileEvent : Event
 {
   public Tile Tile { get; set; }
 }
 
-public class TileUpdateEvent : Event
-{
-  public Tile Tile { get; set; }
-}
+public class CreateTileEvent : TileEvent { }
 
-public class ItemUpdatedEvent : Event
+public class UpdateTileEvent : TileEvent { }
+
+public class LoadTileEvent : TileEvent { }
+
+public class ItemEvent : Event
 {
   public Item Item { get; set; }
-  public bool UpdateOnly { get; set; }
 }
+
+public class CreateItemEvent : ItemEvent { }
+
+public class UpdateItemEvent : ItemEvent { }
+
+#endregion
 
 public class Tile
 {
@@ -36,21 +45,17 @@ public class Tile
 
   #region Properties
 
+  public Position Position { get; set; }
+
   public TileType Type { get; set; } = TileType.Space;
 
   public Item Item { get; set; }
 
-  //public MovableObject MovableObject { get; set; }
-
+  public Job ActiveJob { get; set; }
 
   public World World { get; set; }
-  public Position Position { get; set; }
-  public bool JobScheduled { get; set; }
 
-  internal bool IsNeighbour(Tile tile)
-  {
-    return Position.IsNorthOf(tile.Position) || Position.IsEastOf(tile.Position) || Position.IsSouthOf(tile.Position) || Position.IsWestOf(tile.Position);
-  }
+  public bool JobScheduled { get; set; }
 
   #endregion
 
@@ -72,26 +77,20 @@ public class Tile
     {
       Type = type;
 
-      new TileUpdateEvent { Tile = this }.Publish();
+      new UpdateTileEvent { Tile = this }.Publish();
 
       //IoC.Get<EventAggregator>().Publish(new TileUpdateEvent { Tile = this });
     }
   }
 
-  public void InstallItemOnTile(Item item)
+  public void InstallItem(Item item)
   {
     Item = item;
+    ActiveJob = null;
 
     //  Add item to world collection ?
     World.AddItem(item);
-
-    //  TODO is this the best place ?
-
-    //Item.Installing = false;
-    JobScheduled = false;
-
-    //  TODO Does this belong here
-    new ItemUpdatedEvent { Item = item }.Publish();
+    new CreateItemEvent { Item = item }.Publish();
   }
 
   public Enterable IsEnterable()
@@ -101,4 +100,34 @@ public class Tile
 
   #endregion
 
+  #region Save/Load
+
+  public void UpdateFrom(TileData data, World world)
+  {
+    Type = TileType.Floor;
+    ActiveJob = world.GetJobs().FirstOrDefault(job => job.Id == data.job_id);
+  }
+
+  public TileData ToData()
+  {
+    return new TileData
+    {
+      x = Position.x,
+      y = Position.y,
+      item = Item?.Type,
+      job_id = ActiveJob?.Id ?? 0
+    };
+  }
+
+  #endregion
+}
+
+[Serializable]
+public class TileData
+{
+  public int x;
+  public int y;
+
+  public string item;
+  public long job_id;
 }

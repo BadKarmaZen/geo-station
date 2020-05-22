@@ -11,6 +11,10 @@ public class DragEvent
   public bool Complete { get; set; }
 }
 
+/// <summary>
+/// This controller manages the build commands from the user
+/// Controller Launch order : 5
+/// </summary>
 public class BuildController : MonoBehaviour, IHandle<DragEvent>
 {
   enum BuildAction
@@ -99,12 +103,7 @@ public class BuildController : MonoBehaviour, IHandle<DragEvent>
           if (item != null)
           {
             //  Create a job for it
-            IoC.Get<WorldController>().CreateJob(new Job
-            {
-              Tile = tile,
-              Item = item.Type,
-              BuildTime = item.Type == "Door" ? 0.5f : 1f
-            });
+            IoC.Get<WorldController>().CreateJob(new Job(tile, item.Type, item.Type == "Door" ? 0.5f : 1f));
 
             //  TODO ? jobcontroller
             //new ItemUpdatedEvent { Item = item }.Publish();
@@ -134,13 +133,21 @@ public class BuildController : MonoBehaviour, IHandle<DragEvent>
 
   void Awake()
   {
+    Debug.Log("BuildController.Awake");
     IoC.RegisterInstance(this);
+  }
+
+  public void OnEnable()
+  {
+    Debug.Log("BuildController.OnEnable");
+    IoC.Get<EventAggregator>().Subscribe(this);
   }
 
   // Start is called before the first frame update
   void Start()
   {
-    IoC.Get<EventAggregator>().Subscribe(this);
+    Debug.Log("BuildController.Start");
+
     _objectFactory = IoC.Get<GameObjectFactory>();
   }
 

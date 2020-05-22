@@ -15,7 +15,7 @@ public class ObjectFactory
 
   public ItemFactory CreateFactory(Item protoype, params string[] allowedNeighbours)
   {
-    var factory = new ItemFactory(protoype, allowedNeighbours);
+     var factory = new ItemFactory(protoype, allowedNeighbours);
 
     _itemFactories.Add(factory.Type, factory);
 

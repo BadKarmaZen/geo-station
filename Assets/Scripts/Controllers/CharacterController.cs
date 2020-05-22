@@ -3,6 +3,10 @@ using System.Collections.Generic;
 using System.Security.Cryptography;
 using UnityEngine;
 
+/// <summary>
+/// This controller manages the displayed characters
+/// Controller Launch order : 3 
+/// </summary>
 public class CharacterController : MonoBehaviour
   , IHandle<WorldUpdateEvent>
   , IHandle<CharacterCreatedEvent>
@@ -21,6 +25,7 @@ public class CharacterController : MonoBehaviour
   #region Members
 
   private ResourceCollection _resourceCollection;
+
   Dictionary<Character, CharacterInfo> _characterGraphics = new Dictionary<Character, CharacterInfo>();
 
   #endregion
@@ -29,17 +34,17 @@ public class CharacterController : MonoBehaviour
 
   public void OnHandle(WorldUpdateEvent message)
   {
-    if (message.Reset)
-    {
-      //  a new world has been set up
-      //
-      foreach (var character in _characterGraphics.Values)
-      {
-        Destroy(character.main);
-      }
+    //if (message.Reset)
+    //{
+    //  //  a new world has been set up
+    //  //
+    //  foreach (var character in _characterGraphics.Values)
+    //  {
+    //    Destroy(character.main);
+    //  }
 
-      _characterGraphics = new Dictionary<Character, CharacterInfo>();
-    }
+    //  _characterGraphics = new Dictionary<Character, CharacterInfo>();
+    //}
   }
 
   public void OnHandle(CharacterCreatedEvent message)
@@ -95,14 +100,22 @@ public class CharacterController : MonoBehaviour
 
   void Awake()
   {
-    IoC.Get<EventAggregator>().Subscribe(this);
+    Debug.Log($"CharacterController.Awake => {_characterGraphics.Count}");
 
     _resourceCollection = new ResourceCollection("Other");
+  }
+
+  public void OnEnable()
+  {
+    Debug.Log("CharacterController.OnEnable");
+
+    IoC.Get<EventAggregator>().Subscribe(this);
   }
 
   // Start is called before the first frame update
   void Start()
   {
+    Debug.Log($"CharacterController.Start");
   }
 
   // Update is called once per frame

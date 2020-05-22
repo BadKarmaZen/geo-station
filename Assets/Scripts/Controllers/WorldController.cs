@@ -15,12 +15,16 @@ public class WorldUpdateEvent : Event
   public bool UnPaused { get; set; }
 }
 
+
+/// <summary>
+/// This is the wolrd controller, important changes to the world are managed by this controller
+/// This controller is launched first: lauch order = 1
+/// </summary>
 public class WorldController : MonoBehaviour
 {
   #region Member
 
   World _world;
-  Dictionary<(int x, int y), GameObject> _tiles = new Dictionary<(int x, int y), GameObject>();
 
   static string _filename;
 
@@ -32,6 +36,7 @@ public class WorldController : MonoBehaviour
   {
     Debug.Log("WorldController.Awake");
 
+    //  Initialize the Ioc so that this 'game' - session has all brand new object instances ...
     IoC.Initialize();
 
     IoC.RegisterType<GameObjectFactory>();
@@ -41,38 +46,44 @@ public class WorldController : MonoBehaviour
     //  TODO : improve to some core location
     CreatePrototypes();
   }
+
   public void OnEnable()
   {
     Debug.Log("WorldController.OnEnable");
-
-   
   }
 
   // Start is called before the first frame update
+
   void Start()
   {
     Debug.Log("WorldController.Start");
 
     if (_filename != null)
     {
-      var json = File.ReadAllText(_filename);
-      var saveGame = JsonUtility.FromJson<WorldData>(json);
+      Debug.Log("WorldController.LoadGame.Create");
 
-      _world = World.LoadSaveGame(saveGame);
+      var json = File.ReadAllText(_filename);
+      var saveGame = JsonUtility.FromJson<GameData>(json);
+
+      _world = World.LoadSaveGame(saveGame.world);
 
       //  World is create we need to create all the ui elemements
 
       LoadUiElements();
+
+      //  set the camera
+      Camera.main.transform.position = new Vector3(saveGame.camera_x, saveGame.camera_y, -10);
+
+      _world.Unpause();
     }
   }
 
   private void LoadUiElements()
   {
     //  create tiles
-    foreach (var tile in _world.GetAllTiles(t => t != null))
+    foreach (var tile in _world.GetAllTiles())
     {
-      new CreateTileEvent { Tile = tile }.Publish();
-      new TileUpdateEvent { Tile = tile }.Publish();
+      new LoadTileEvent { Tile = tile }.Publish();
     }
 
     //  create characters
@@ -88,7 +99,7 @@ public class WorldController : MonoBehaviour
     }
 
     //  create resources
-    foreach (var resource  in _world.GetBuildiongResource())
+    foreach (var resource in _world.GetBuildiongResource())
     {
       new BuildingResourceUpdatedEvent { Resource = resource }.Publish();
     }
@@ -140,6 +151,8 @@ public class WorldController : MonoBehaviour
     {
       new CharacterCreatedEvent { Character = _world.CreateCharacter(centerTile) }.Publish();
     }
+
+    _world?.Unpause();
   }
 
   internal void CreateResource(string resourceType, Tile tile)
@@ -150,14 +163,17 @@ public class WorldController : MonoBehaviour
 
   public void LoadWorld()
   {
+    Debug.Log("WorldController.LoadGame.Menu");
+
+    //  pause the current world
+    _world?.Pause();
+
     new WorldUpdateEvent { Reset = true }.Publish();
 
     SceneManager.LoadScene(SceneManager.GetActiveScene().name);
 
     _filename = @"d:\[unity]\geo.txt";
   }
-
-
 
   internal void CreateJob(Job job)
   {
@@ -168,7 +184,13 @@ public class WorldController : MonoBehaviour
 
   public void SaveWorld()
   {
-    var savegame = _world.CreateSaveGame();
+    var savegame = new GameData
+    {
+      camera_x = Camera.main.transform.position.x,
+      camera_y = Camera.main.transform.position.y,
+
+      world = _world.CreateSaveGame()
+    };
 
     var json = JsonUtility.ToJson(savegame, true);
 
@@ -176,7 +198,6 @@ public class WorldController : MonoBehaviour
   }
 
   #endregion
-
 
   #region Helper Methods
 
@@ -209,7 +230,6 @@ public class WorldController : MonoBehaviour
 
   #endregion
 
-
   #region internal Helpers
 
   private void CreatePrototypes()
@@ -220,8 +240,8 @@ public class WorldController : MonoBehaviour
     var wallFactory = objectFactory.CreateFactory(new Item(Item.Wall, 0f));
     wallFactory.AddBuildRule((tile, factory) =>
    {
-     //  a wall must be build on a floor tile
-     return tile.Type == Tile.TileType.Floor;
+     //  a wall must be build on a floor tile and must be empty
+     return tile.Type == Tile.TileType.Floor && tile.Item == null;
    });
 
     wallFactory.BuildSound = "welding";
@@ -236,7 +256,7 @@ public class WorldController : MonoBehaviour
 
     doorFactory.AddBuildRule((tile, factory) =>
     {
-      if (tile.Type != Tile.TileType.Floor)
+      if (tile.Type != Tile.TileType.Floor || tile.Item != null)
         return false;
 
       //  door must have wall to north & south, or east & west
@@ -265,4 +285,13 @@ public class WorldController : MonoBehaviour
   }
 
   #endregion
+}
+
+[Serializable]
+public class GameData
+{
+  public float camera_x;
+  public float camera_y;
+
+  public WorldData world;
 }

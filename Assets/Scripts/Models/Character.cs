@@ -5,16 +5,21 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.Security.Cryptography;
 
+#region Events
+
 public class CharacterEvent : Event
 {
   public Character Character { get; set; }
 }
 
 public class CharacterCreatedEvent : CharacterEvent { }
+
 public class CharacterUpdatedEvent : CharacterEvent
 {
   public bool Hand { get; internal set; }
 }
+
+#endregion
 
 public class Character
 {
@@ -24,23 +29,21 @@ public class Character
   private float _movementCompletePercentage; //	goes from 0 to 1
   private Stack<Tile> _path = null;
 
-
-
-
-
   #endregion
 
   #region Properties
 
+  public float Speed { get; set; }
   public World World { get; set; }
-
   public Tile CurrentTile { get; set; }
   public Tile DestinationTile { get; set; }
   public Tile NextTile { get; set; }
-  public float Speed { get; set; }
-
   public Job CurrentJob { get; set; }
+  public BuildingResource SelectedResourcePile { get; set; }
+  public bool HasResource { get; set; }
 
+
+  //  Ui Updates
   public float X
   {
     get
@@ -66,16 +69,16 @@ public class Character
     }
   }
 
-  public BuildingResource SelectedResourcePile { get; set; }
-  public bool HasResource { get; set; }
-
   #endregion
 
   #region Construction
 
-  public Character(Tile tile)
+  public Character(Tile tile, World world, float speed)
   {
     CurrentTile = tile;
+    World = world;
+    Speed = speed;
+
     DestinationTile = null;
   }
 
@@ -88,7 +91,6 @@ public class Character
     UpdateTask(deltaTime);
     UpdateMovement(deltaTime);
   }
-
 
   private void MoveIdle()
   {
@@ -104,6 +106,7 @@ public class Character
       }
     }
   }
+
   private void UpdateTask(float deltaTime)
   {
     //  if nothing to do, move idle
@@ -137,14 +140,7 @@ public class Character
         if (CurrentJob.ProcessJob(deltaTime))
         {
           HasResource = false;
-
-          //  job is completed
-          new JobUpdateEvent
-          {
-            //Worker = this,
-            Job = CurrentJob
-          }.Publish();
-
+          CurrentJob.FinishJob();
           CurrentJob = null;
         }
 
@@ -330,23 +326,12 @@ public class Character
 
     Debug.Log($"Assign new job");
 
+    job.AcceptJob();
     CurrentJob = job;
-    CurrentJob.Busy = true;
   }
 
   public bool SetDestination(Tile tile)
   {
-    //  TODO improve ? for direct neigbours
-
-    // Debug.Log($"Charcter.SetDestination{tile.Position}");
-
-    //if (tile.IsNeighbour(CurrentTile))
-    //{
-    //  DestinationTile = tile;
-    //  NextTile = DestinationTile;
-    //}
-    //else
-    //{
     if (tile.Type == Tile.TileType.Floor)
     {
       //  Need to find path to
@@ -358,26 +343,45 @@ public class Character
         DestinationTile = tile;
       }
     }
-    // }
 
     return DestinationTile != null;
   }
+
   #endregion
+
+  #region Save/Load
+
+  public Character(CharacterData data, World world)
+  {
+    World = world;
+    Speed = data.speed;
+
+    CurrentTile = world.GetTile(data.x, data.y);
+    HasResource = data.has_resource;
+
+    CurrentJob = world.GetJobs().FirstOrDefault(job => job.Id == data.job_id);
+    SelectedResourcePile = world.GetBuildiongResource().FirstOrDefault(resource => resource.Id == data.resource_id);
+  }
 
   public CharacterData ToData() => new CharacterData
   {
+    speed = Speed,
     x = CurrentTile.Position.x,
     y = CurrentTile.Position.y,
     has_resource = HasResource,
     job_id = CurrentJob?.Id ?? 0,
     resource_id = SelectedResourcePile?.Id ?? 0
   };
+
+  #endregion
 }
 
 [Serializable]
 public class CharacterData
 {
   //public string name;
+  public float speed;
+
   public int x;
   public int y;
   public bool has_resource;

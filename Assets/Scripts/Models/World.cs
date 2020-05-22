@@ -17,7 +17,11 @@ public class World
   private List<Character> _characters;
   private List<Item> _items;
 
+  #endregion
 
+  #region Properties
+
+  public bool IsPaused { get; private set; }
 
   #endregion
 
@@ -28,6 +32,8 @@ public class World
     _characters = new List<Character>();
     _items = new List<Item>();
     _jobs = new List<Job>();
+
+    IsPaused = true;
   }
 
   public World(int width, int height) : this()
@@ -50,8 +56,17 @@ public class World
 
   #region Methods
 
+  public void Pause() => IsPaused = true;
+  public void Unpause() 
+  {
+    Debug.Log("Unpause");
+   
+    IsPaused = false;
+  }
+
   public void Update(float deltaTime)
   {
+    if (IsPaused) return;
 
     foreach (var character in _characters)
     {
@@ -68,11 +83,9 @@ public class World
 
   }
 
-
-
   public Character CreateCharacter(Tile tile)
   {
-    var character = new Character(tile) { World = this, Speed = 2f };
+    var character = new Character(tile, this, 2f);
     _characters.Add(character);
 
     return character;
@@ -126,6 +139,9 @@ public class World
 
   public void UpdateJobs(float deltaTime)
   {
+    //  remove all completed jobs from queue
+    _jobs.RemoveAll(job => job.IsCompleted());
+
     var jobTodo = _jobs.FirstOrDefault(job => !job.Busy);
     if (jobTodo != null)
     {
@@ -138,21 +154,20 @@ public class World
         freeWorker.AssignJob(jobTodo);
       }
     }
-
-    //  remove all completed jobs from queue
-    _jobs.RemoveAll(job => job.IsCompleted());
   }
 
   #endregion
 
   #region Building resources
 
-  private long _nextBuildingId;
+  private long _nextBuildingId = 1;
   private List<BuildingResource> _buildingResources = new List<BuildingResource>();
 
   public BuildingResource CreateBuildingResource(Tile tile, string type)
   {
-    var resource = new BuildingResource(type, tile);
+    var resource = new BuildingResource(type, tile, amount: 5);
+    resource.Id = _nextBuildingId++;
+
     _buildingResources.Add(resource);
     return resource;
   }
@@ -238,11 +253,7 @@ public class World
   {
     var data = new WorldData { width = Width, height = Height };
 
-    data.tiles = GetAllTiles(tile => tile.Type == Tile.TileType.Floor).Select(tile => new TileData
-    {
-      x = tile.Position.x,
-      y = tile.Position.y
-    }).ToList();
+    data.tiles = GetAllTiles(tile => tile.Type == Tile.TileType.Floor).Select(tile => tile.ToData()).ToList();
 
     data.jobs = _jobs.Select(job => job.ToData()).ToList();
     data.characters = _characters.Select(character => character.ToData()).ToList();
@@ -259,19 +270,19 @@ public class World
     foreach (var tile in data.tiles)
     {
       world._tiles[tile.x, tile.y].Type = Tile.TileType.Floor;
+
+      if(!string.IsNullOrWhiteSpace(tile.item))
+      {
+        var item = IoC.Get<ObjectFactory>().GetFactory(tile.item).LoadItem(world._tiles[tile.x, tile.y]);
+        world._items.Add(item);
+        world._tiles[tile.x, tile.y].Item = item;
+      }
     }
 
     //  create jobs
     foreach (var job in data.jobs)
     {
-      world._jobs.Add(new Job
-      {
-        Id = job.id,
-        BuildTime = job.buildtime,
-        Busy = job.busy,
-        Tile = world.GetTile(job.x, job.y),
-        Item = job.type
-      });
+      world._jobs.Add(new Job(job, world));
     }
 
     if (world._jobs.Count > 0)
@@ -282,27 +293,20 @@ public class World
     //  create resource
     foreach (var buildingResource in data.building_resources)
     {
-      world._buildingResources.Add(new BuildingResource(buildingResource.type, world.GetTile(buildingResource.x, buildingResource.y), buildingResource.amount)
+      var resource = new BuildingResource(buildingResource, world);
+      world._buildingResources.Add(resource);
+
+      if (world._nextBuildingId <= resource.Id)
       {
-        Id = buildingResource.id,
-        AmountReserved = buildingResource.amount_reserved
-      });
+        //  update resource Id;
+        world._nextBuildingId = resource.Id + 1;
+      }
     }
-
-    if (world._buildingResources.Count > 0)
-    {
-      world._nextBuildingId = world._buildingResources.Max(r => r.Id) + 1;
-    }
-
+    
     //  create characters
     foreach (var character in data.characters)
     {
-      world._characters.Add(new Character(world.GetTile(character.x, character.y))
-      {
-        Speed = 2f,
-        CurrentJob = world._jobs.FirstOrDefault(j => j.Id == character.job_id),
-        SelectedResourcePile = world._buildingResources.FirstOrDefault(r => r.Id == character.resource_id)
-      });
+      world._characters.Add(new Character(character, world));
     }
 
     return world;
@@ -323,17 +327,8 @@ public class WorldData
   public List<BuildingResourceData> building_resources;
 }
 
-[Serializable]
-public class TileData
-{
-  public int x;
-  public int y;
-
-  public ItemData item;
-}
-
-[Serializable]
-public class ItemData
-{
-  public string Type;
-}
+// [Serializable]
+// public class ItemData
+// {
+//   public string Type;
+// }

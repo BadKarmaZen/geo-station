@@ -56,6 +56,8 @@ public class ItemFactory
   public Item CreateItem(Tile tile)
     => _buildRule(tile, this) ? new Item(Protoype, tile, this) : null;
 
+  public Item LoadItem(Tile tile) => new Item(Protoype, tile, this);
+
   internal void AddAction(string action, string from, string transition, string to, Func<Item, float, bool> updateAction, string idle = null)
   {
     if (!_itemStates.ContainsKey(from))

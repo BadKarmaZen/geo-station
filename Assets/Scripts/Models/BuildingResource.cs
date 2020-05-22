@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Data;
 using UnityEngine;
 
 public class BuildingResourceUpdatedEvent : Event
@@ -10,8 +11,7 @@ public class BuildingResourceUpdatedEvent : Event
 
 public class BuildingResource
 {
-  //  todo debug
-  static long nextId = 1;
+  #region Properties
 
   public long Id { get; set; }
   public string Type { get; set; }
@@ -20,22 +20,25 @@ public class BuildingResource
   public int AmountLeft => Amount - AmountReserved;
   public Tile Tile { get; set; }
 
-  public BuildingResource(string type, Tile tile,int amount = 5)
+  #endregion
+
+  #region Construction
+
+  public BuildingResource(string type, Tile tile, int amount)
   {
-    Id = nextId++;
     Type = type;
     Amount = amount;
     AmountReserved = 0;
     Tile = tile;
-
-    //Debug.Log($"BuildingResource.Create: {Type}_{Id}.(a = {Amount}, r={AmountReserved}) => {AmountLeft}");    
   }
+
+  #endregion
+
+  #region Methods
 
   public void Reserve()
   {
     AmountReserved++;
-
-    //Debug.Log($"BuildingResource.Reserve: {Type}_{Id}.(a = {Amount}, r={AmountReserved}) => {AmountLeft}");
   }
 
   internal void TakeResource()
@@ -43,16 +46,26 @@ public class BuildingResource
     Amount--;
     AmountReserved--;
 
-    //Debug.Log($"BuildingResource.TakeResource: {Type}_{Id}.(a = {Amount}, r={AmountReserved}) => {AmountLeft}");
-
     if (Amount == 0)
     {
-      //Debug.Log($"BuildingResource.TakeResource => notify");
       new BuildingResourceUpdatedEvent { Resource = this }.Publish();
     }
   }
 
-  public BuildingResourceData ToData() => new BuildingResourceData 
+  #endregion
+
+  #region Save/Load
+
+  public BuildingResource(BuildingResourceData data, World world)
+  {
+    Id = data.id;
+    Type = data.type;
+    Tile = world.GetTile(data.x, data.y);
+    Amount = data.amount;
+    AmountReserved = data.amount_reserved;
+  }
+
+  public BuildingResourceData ToData() => new BuildingResourceData
   {
     id = Id,
     type = Type,
@@ -62,6 +75,7 @@ public class BuildingResource
     amount_reserved = AmountReserved
   };
 
+  #endregion
 }
 
 [Serializable]
@@ -73,6 +87,4 @@ public class BuildingResourceData
   public int y;
   public int amount;
   public int amount_reserved;
-
-
 }

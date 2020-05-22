@@ -4,19 +4,25 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
+/// <summary>
+/// This controller is resposible for the main world ui, showing tiles, items, ...
+/// Controller Launch order : 2
+/// </summary>
 public class SpriteController : MonoBehaviour
   , IHandle<WorldUpdateEvent>
   , IHandle<CreateTileEvent>
-  , IHandle<TileUpdateEvent>
-  , IHandle<ItemUpdatedEvent>
+  , IHandle<UpdateTileEvent>
+  , IHandle<LoadTileEvent>
+  , IHandle<CreateItemEvent>
+  , IHandle<UpdateItemEvent>
   , IHandle<BuildingResourceUpdatedEvent>
 {
   #region Members
 
-  private Dictionary<Position, GameObject> _tileGraphics = new Dictionary<Position, GameObject>();
-  private Dictionary<Item, GameObject> _itemGraphics = new Dictionary<Item, GameObject>();
   private ResourceCollection _resourceCollection;
 
+  private Dictionary<Position, GameObject> _tileGraphics = new Dictionary<Position, GameObject>();
+  private Dictionary<Item, GameObject> _itemGraphics = new Dictionary<Item, GameObject>();
   private Dictionary<BuildingResource, GameObject> _resourceGraphics = new Dictionary<BuildingResource, GameObject>();
 
   #endregion
@@ -25,132 +31,127 @@ public class SpriteController : MonoBehaviour
 
   public void OnHandle(WorldUpdateEvent message)
   {
-    if (message.Reset)
-    {
-      //  a new world has been set up
-      //  _destroy all currenty graphics
+    //if (message.Reset)
+    //{
+    //  //  a new world has been set up
+    //  //  _destroy all currenty graphics
 
-      foreach (var tile in _tileGraphics.Values)
-      {
-        Destroy(tile);
-      }
-      foreach (var item in _itemGraphics.Values)
-      {
-        Destroy(item);
-      }
-      foreach (var resource in _resourceGraphics.Values)
-      {
-        Destroy(resource);
-      }
+    //  foreach (var tile in _tileGraphics.Values)
+    //  {
+    //    Destroy(tile);
+    //  }
+    //  foreach (var item in _itemGraphics.Values)
+    //  {
+    //    Destroy(item);
+    //  }
+    //  foreach (var resource in _resourceGraphics.Values)
+    //  {
+    //    Destroy(resource);
+    //  }
 
-      _tileGraphics = new Dictionary<Position, GameObject>();
-      _itemGraphics = new Dictionary<Item, GameObject>();
-      _resourceGraphics = new Dictionary<BuildingResource, GameObject>();
-    }
+    //  _tileGraphics = new Dictionary<Position, GameObject>();
+    //  _itemGraphics = new Dictionary<Item, GameObject>();
+    //  _resourceGraphics = new Dictionary<BuildingResource, GameObject>();
+    //}
   }
-
 
   public void OnHandle(CreateTileEvent message)
   {
-    GameObject goTile = new GameObject();
-    _tileGraphics.Add(message.Tile.Position, goTile);
-    goTile.name = $"Tile_{message.Tile.Position}";
-    goTile.transform.position = message.Tile.Position.GetVector();
-    goTile.transform.SetParent(this.transform, true);
-    goTile.AddComponent<SpriteRenderer>();
+    CreateTile(message.Tile);
   }
 
-  public void OnHandle(TileUpdateEvent message)
+  public void OnHandle(UpdateTileEvent message)
   {
-    var tile = message.Tile;
-
-    if (!_tileGraphics.ContainsKey(tile.Position))
-    {
-      Debug.LogError("Unknown Tile");
-      return;
-    }
-
-    SpriteRenderer renderer = _tileGraphics[tile.Position].GetComponent<SpriteRenderer>();
-    if (tile.Type == Tile.TileType.Floor)
-    {
-      renderer.sprite = floorSprite;
-    }
-    else
-    {
-      renderer.sprite = null;
-    }
+    UpdateTile(message.Tile);
   }
 
-  public void OnHandle(ItemUpdatedEvent message)
+  //  messages is used when a tile gets loaded from a savegame
+  public void OnHandle(LoadTileEvent message)
   {
-    var item = message.Item;
+    CreateTile(message.Tile);
+    UpdateTile(message.Tile);
 
-    //  TODO remove job
-    //if (message.JobFailed)
+    if (message.Tile.Item != null)
+    {
+      CreateItem(message.Tile.Item, false);
+    }
+  }
+  public void OnHandle(CreateItemEvent message)
+  {
+    CreateItem(message.Item);
+  }
+
+  public void OnHandle(UpdateItemEvent message)
+  {
+    UpdateItem(message.Item);
+    //var item = message.Item;
+
+    ////  TODO remove job
+    ////if (message.JobFailed)
+    ////{
+    ////  //  remove job sprite
+    ////  if (_fixedObjectGraphics.ContainsKey(item))
+    ////  {
+    ////    var graphic = _fixedObjectGraphics[item];
+    ////    Destroy(graphic);
+    ////    return;
+    ////  }
+    ////}
+
+    ////  TODO improve - generic
+    //bool rotate = false;
+
+    //if (item.Type == Item.Door)
     //{
-    //  //  remove job sprite
-    //  if (_fixedObjectGraphics.ContainsKey(item))
-    //  {
-    //    var graphic = _fixedObjectGraphics[item];
-    //    Destroy(graphic);
-    //    return;
-    //  }
+    //  //  default door is EW
+    //  //  it there is a wall to the north this is as NS door, so rotate
+    //  var north = IoC.Get<WorldController>().GetTile(item.Tile.Position.GetNorth());
+    //  var south = IoC.Get<WorldController>().GetTile(item.Tile.Position.GetSouth());
+
+    //  rotate = north?.Item?.Type == Item.Wall && south?.Item?.Type == Item.Wall;
     //}
 
-    //  TODO improve - generic
-    bool rotate = false;
+    //if (message.UpdateOnly == false)
+    //{
+    //  GameObject graphic;
+    //  SpriteRenderer renderer;
 
-    if (item.Type == Item.Door)
-    {
-      //  default door is EW
-      //  it there is a wall to the north this is as NS door, so rotate
-      var north = IoC.Get<WorldController>().GetTile(item.Tile.Position.GetNorth());
-      var south = IoC.Get<WorldController>().GetTile(item.Tile.Position.GetSouth());
+    //  if (!_itemGraphics.ContainsKey(item))
+    //  {
+    //    graphic = new GameObject();
 
-      rotate = north?.Item?.Type == Item.Wall && south?.Item?.Type == Item.Wall;
-    }
+    //    graphic.name = $"{item.Type}_{item.Tile.Position}";
+    //    graphic.transform.position = new Vector3(item.Tile.Position.x, item.Tile.Position.y);
 
-    if (message.UpdateOnly == false)
-    {
-      GameObject graphic;
-      SpriteRenderer renderer;
+    //    if (rotate)
+    //    {
+    //      graphic.transform.rotation = Quaternion.Euler(0, 0, 90);
+    //    }
 
-      if (!_itemGraphics.ContainsKey(item))
-      {
-        graphic = new GameObject();
+    //    graphic.transform.SetParent(this.transform, true);
 
-        graphic.name = $"{item.Type}_{item.Tile.Position}";
-        graphic.transform.position = new Vector3(item.Tile.Position.x, item.Tile.Position.y);
+    //    _itemGraphics.Add(item, graphic);
+    //    renderer = graphic.AddComponent<SpriteRenderer>();
+    //  }
+    //  else
+    //  {
+    //    renderer = _itemGraphics[item].GetComponent<SpriteRenderer>();
+    //  }
 
-        if (rotate)
-        {
-          graphic.transform.rotation = Quaternion.Euler(0, 0, 90);
-        }
+    //  var spriteName = BuildItemSpriteName(item);
+    //  renderer.sprite = _resourceCollection.GetSprite(spriteName);
+    //  renderer.sortingLayerName = "FixedObjects";
 
-        graphic.transform.SetParent(this.transform, true);
-
-        _itemGraphics.Add(item, graphic);
-        renderer = graphic.AddComponent<SpriteRenderer>();
-      }
-      else
-      {
-        renderer = _itemGraphics[item].GetComponent<SpriteRenderer>();
-      }
-
-      var spriteName = BuildItemSpriteName(item);
-      renderer.sprite = _resourceCollection.GetSprite(spriteName);
-      renderer.sortingLayerName = "FixedObjects";
-
-      NotifyNeighbours(item);
-    }
-    else
-    {
-      var renderer = _itemGraphics[item].GetComponent<SpriteRenderer>();
-      var spriteName = BuildItemSpriteName(item);
-      renderer.sprite = _resourceCollection.GetSprite(spriteName);
-    }
+    //  NotifyNeighbours(item);
+    //}
+    //else
+    //{
+    //  var renderer = _itemGraphics[item].GetComponent<SpriteRenderer>();
+    //  var spriteName = BuildItemSpriteName(item);
+    //  renderer.sprite = _resourceCollection.GetSprite(spriteName);
+    //}
   }
-  
+
   public void OnHandle(BuildingResourceUpdatedEvent message)
   {
     Debug.Log($"SpriteController.OnHandle_BuildingResourceUpdatedEvent = {message.Resource.Id} => {message.Resource.Amount}");
@@ -178,6 +179,7 @@ public class SpriteController : MonoBehaviour
       }
     }
   }
+
 
   #endregion
 
@@ -210,19 +212,30 @@ public class SpriteController : MonoBehaviour
 
   #region Unity
 
-  public void Awake()
-  {
-    Debug.Log($"SpriteController.ctor");
-    IoC.Get<EventAggregator>().Subscribe(this);
-    _resourceCollection = new ResourceCollection("Objects");
-  }
+  #region Properties
 
   public Sprite floorSprite;
 
+  #endregion
+
+  public void Awake()
+  {
+    Debug.Log($"SpriteController.Awake");
+    _resourceCollection = new ResourceCollection("Objects");
+  }
+
+  public void OnEnable()
+  {
+    Debug.Log("SpriteController.OnEnable");
+
+    //  the controller is active subscribe to events
+    IoC.Get<EventAggregator>().Subscribe(this);
+  }
+
   // Start is called before the first frame update
   void Start()
-  { 
-    Debug.Log($"SpriteController.Start");
+  {
+    //Debug.Log($"SpriteController.Start");
 
 
     //var world = IoC.Get<World>();
@@ -266,31 +279,97 @@ public class SpriteController : MonoBehaviour
 
   }
 
-
   #endregion
 
   #region Helpers
 
-  //private void LoadResources()
-  //{
-  //  var sprites = Resources.LoadAll<Sprite>("Objects");
+  private void CreateTile(Tile tile)
+  {
+    if(_tileGraphics.ContainsKey(tile.Position))
+    {
+      Debug.LogError($"*** Tile {tile.Position} already created ***");
+      return;
+    }
 
-  //  foreach (var sprite in sprites)
-  //  {
-  //    _fixedObjectSprites.Add(sprite.name, sprite);
-  //  }
-  //}
+    var grahic = new GameObject();
+    _tileGraphics.Add(tile.Position, grahic);
+    grahic.name = $"Tile_{tile.Position}";
+    grahic.transform.position = tile.Position.GetVector();
+    grahic.transform.SetParent(this.transform, true);
+    grahic.AddComponent<SpriteRenderer>();
+  }
 
-  //public Sprite GetSprite(string name)
-  //{
-  //  if (_fixedObjectSprites.ContainsKey(name) == false)
-  //  {
-  //    Debug.Log("Fixed object Sprite not found: " + name);
-  //    return null;
-  //  }
+  private void UpdateTile(Tile tile)
+  {
+    if (_tileGraphics.TryGetValue(tile.Position, out var graphic))
+    {
+      SpriteRenderer renderer = graphic.GetComponent<SpriteRenderer>();
 
-  //  return _fixedObjectSprites[name];
-  //}
+      renderer.sprite = (tile.Type == Tile.TileType.Floor) ? floorSprite : null;
+    }
+    else
+    {
+      Debug.LogError("Unknown Tile");
+    }
+  }
+
+  private void CreateItem(Item item, bool notify = true)
+  {
+    if (_itemGraphics.ContainsKey(item))
+    {
+      Debug.LogError($"*** Item {item.Type}@{item.Tile.Position} already created ***");
+      return;
+    }
+
+    var graphic = new GameObject();
+
+    graphic.name = $"{item.Type}_{item.Tile.Position}";
+    graphic.transform.position = new Vector3(item.Tile.Position.x, item.Tile.Position.y);
+
+    //  TODO improve - generic
+    bool rotate = false;
+
+    if (item.Type == Item.Door)
+    {
+      //  default door is EW
+      //  it there is a wall to the north this is as NS door, so rotate
+      var north = IoC.Get<WorldController>().GetTile(item.Tile.Position.GetNorth());
+      var south = IoC.Get<WorldController>().GetTile(item.Tile.Position.GetSouth());
+
+      rotate = north?.Item?.Type == Item.Wall && south?.Item?.Type == Item.Wall;
+    }
+
+    if (rotate)
+    {
+      graphic.transform.rotation = Quaternion.Euler(0, 0, 90);
+    }
+
+    graphic.transform.SetParent(this.transform, true);
+
+    _itemGraphics.Add(item, graphic);
+    var renderer = graphic.AddComponent<SpriteRenderer>();
+    var spriteName = BuildItemSpriteName(item);
+    renderer.sprite = _resourceCollection.GetSprite(spriteName);
+    renderer.sortingLayerName = "FixedObjects";
+
+    if(notify)
+      NotifyNeighbours(item);
+  }
+
+  private void UpdateItem(Item item, bool notify = false)
+  {
+    if (_itemGraphics.TryGetValue(item, out var graphic))
+    {
+      var renderer = graphic.GetComponent<SpriteRenderer>();
+      var spriteName = BuildItemSpriteName(item);
+      renderer.sprite = _resourceCollection.GetSprite(spriteName);
+    }
+    else
+    {
+      Debug.LogError($"Unknown Item {item.Type} @ {item.Tile.Position}");
+    }
+
+  }
 
   private string BuildItemSpriteName(Item item)
   {
@@ -329,7 +408,7 @@ public class SpriteController : MonoBehaviour
 
     foreach (var neighbour in neighbours)
     {
-      new ItemUpdatedEvent { Item = neighbour.Item, UpdateOnly = true }.Publish();
+      new UpdateItemEvent { Item = neighbour.Item }.Publish();
     }
   }
 

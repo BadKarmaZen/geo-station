@@ -4,6 +4,10 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
+/// <summary>
+/// This controller manages the jobs
+/// Controller Launch order : 4
+/// </summary>
 public class JobController : MonoBehaviour
   , IHandle<WorldUpdateEvent>
   , IHandle<JobUpdateEvent>
@@ -11,6 +15,7 @@ public class JobController : MonoBehaviour
   #region Members
 
   ResourceCollection _resourceCollection;
+
   Dictionary<Job, GameObject> _jobGraphics = new Dictionary<Job, GameObject>();
 
   //WorldController _worldController;
@@ -71,15 +76,24 @@ public class JobController : MonoBehaviour
 
   void Awake()
   {
+    Debug.Log("JobController.Awake");
+
     IoC.RegisterInstance(this);
-    IoC.Get<EventAggregator>().Subscribe(this);
 
     _resourceCollection = new ResourceCollection("Jobs");
+  }
+
+  public void OnEnable()
+  {
+    Debug.Log("JobController.OnEnable");
+
+    IoC.Get<EventAggregator>().Subscribe(this);
   }
 
   // Start is called before the first frame update
   void Start()
   {
+    Debug.Log("JobController.Start");
   }
 
   // Update is called once per frame

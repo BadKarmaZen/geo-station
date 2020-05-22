@@ -16,7 +16,6 @@ public class IoC
   static IoC()
   {
     Debug.Log("*** IoC created ***");
-    Initialize();
   }
 
   #endregion
@@ -46,7 +45,6 @@ public class IoC
     _services.Add(typeof(T), instance);
     return instance;
   }
-
 
   public static T Get<T>()
   {
