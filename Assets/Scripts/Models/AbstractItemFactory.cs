@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -9,7 +10,7 @@ public class AbstractItemFactory
 {
   #region Members
 
-  private Dictionary<string, ItemFactory> _itemFactories = new Dictionary<string, ItemFactory>();
+  private Dictionary<string, ItemFactory> _itemFactories;
 
   #endregion
 
@@ -69,6 +70,11 @@ public class AbstractItemFactory
     }
 
     return _itemFactories[type].BuiltTime;
+  }
+
+  internal void Initialize()
+  {
+    _itemFactories = new Dictionary<string, ItemFactory>();
   }
 
   #endregion

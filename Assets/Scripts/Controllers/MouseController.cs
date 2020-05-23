@@ -1,13 +1,20 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using UnityEditorInternal;
 using UnityEngine;
 using UnityEngine.EventSystems;
+
+public class MouseUpdateEvent : Event
+{
+  public Tile Tile { get; set; }
+}  
 
 public class MouseController : MonoBehaviour
 {
   #region Members
 
+  Tile _currentTile;
   Vector3 _currentFramePosition;
   Vector3 _lastFramePosition;
 
@@ -63,11 +70,17 @@ public class MouseController : MonoBehaviour
 
   void UpdateCursor()
   {
-    Tile tile = GetTileAtWorldCoordinate(_currentFramePosition);
+    var tile = GetTileAtWorldCoordinate(_currentFramePosition);
     if (tile != null)
     {
       cursor.SetActive(true);
       cursor.transform.position = new Vector3(tile.Position.x, tile.Position.y);
+
+      if (tile != _currentTile)
+      {
+        _currentTile = tile;
+        new MouseUpdateEvent { Tile = _currentTile }.Publish();
+      }
     }
     else
     {

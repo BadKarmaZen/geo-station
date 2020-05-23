@@ -9,7 +9,7 @@ using UnityEngine;
 /// Controller Launch order : 2
 /// </summary>
 public class SpriteController : MonoBehaviour
-  , IHandle<WorldUpdateEvent>
+  //, IHandle<WorldUpdateEvent>
   , IHandle<CreateTileEvent>
   , IHandle<UpdateTileEvent>
   , IHandle<LoadTileEvent>
@@ -29,31 +29,31 @@ public class SpriteController : MonoBehaviour
 
   #region Events
 
-  public void OnHandle(WorldUpdateEvent message)
-  {
-    //if (message.Reset)
-    //{
-    //  //  a new world has been set up
-    //  //  _destroy all currenty graphics
+  //public void OnHandle(WorldUpdateEvent message)
+  //{
+  //  //if (message.Reset)
+  //  //{
+  //  //  //  a new world has been set up
+  //  //  //  _destroy all currenty graphics
 
-    //  foreach (var tile in _tileGraphics.Values)
-    //  {
-    //    Destroy(tile);
-    //  }
-    //  foreach (var item in _itemGraphics.Values)
-    //  {
-    //    Destroy(item);
-    //  }
-    //  foreach (var resource in _resourceGraphics.Values)
-    //  {
-    //    Destroy(resource);
-    //  }
+  //  //  foreach (var tile in _tileGraphics.Values)
+  //  //  {
+  //  //    Destroy(tile);
+  //  //  }
+  //  //  foreach (var item in _itemGraphics.Values)
+  //  //  {
+  //  //    Destroy(item);
+  //  //  }
+  //  //  foreach (var resource in _resourceGraphics.Values)
+  //  //  {
+  //  //    Destroy(resource);
+  //  //  }
 
-    //  _tileGraphics = new Dictionary<Position, GameObject>();
-    //  _itemGraphics = new Dictionary<Item, GameObject>();
-    //  _resourceGraphics = new Dictionary<BuildingResource, GameObject>();
-    //}
-  }
+  //  //  _tileGraphics = new Dictionary<Position, GameObject>();
+  //  //  _itemGraphics = new Dictionary<Item, GameObject>();
+  //  //  _resourceGraphics = new Dictionary<BuildingResource, GameObject>();
+  //  //}
+  //}
 
   public void OnHandle(CreateTileEvent message)
   {

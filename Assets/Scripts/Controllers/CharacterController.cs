@@ -8,7 +8,7 @@ using UnityEngine;
 /// Controller Launch order : 3 
 /// </summary>
 public class CharacterController : MonoBehaviour
-  , IHandle<WorldUpdateEvent>
+ // , IHandle<WorldUpdateEvent>
   , IHandle<CharacterCreatedEvent>
   , IHandle<CharacterUpdatedEvent>
 {
@@ -32,20 +32,20 @@ public class CharacterController : MonoBehaviour
 
   #region Events
 
-  public void OnHandle(WorldUpdateEvent message)
-  {
-    //if (message.Reset)
-    //{
-    //  //  a new world has been set up
-    //  //
-    //  foreach (var character in _characterGraphics.Values)
-    //  {
-    //    Destroy(character.main);
-    //  }
+  //public void OnHandle(WorldUpdateEvent message)
+  //{
+  //  //if (message.Reset)
+  //  //{
+  //  //  //  a new world has been set up
+  //  //  //
+  //  //  foreach (var character in _characterGraphics.Values)
+  //  //  {
+  //  //    Destroy(character.main);
+  //  //  }
 
-    //  _characterGraphics = new Dictionary<Character, CharacterInfo>();
-    //}
-  }
+  //  //  _characterGraphics = new Dictionary<Character, CharacterInfo>();
+  //  //}
+  //}
 
   public void OnHandle(CharacterCreatedEvent message)
   {

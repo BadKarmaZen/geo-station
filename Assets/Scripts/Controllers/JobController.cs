@@ -9,7 +9,7 @@ using UnityEngine;
 /// Controller Launch order : 4
 /// </summary>
 public class JobController : MonoBehaviour
-  , IHandle<WorldUpdateEvent>
+  //, IHandle<WorldUpdateEvent>
   , IHandle<JobUpdateEvent>
 {
   #region Members
@@ -30,20 +30,20 @@ public class JobController : MonoBehaviour
 
   #region Events
 
-  public void OnHandle(WorldUpdateEvent message)
-  {
-    if (message.Reset)
-    {
-      //  a new world has been set up
-      //
-      foreach (var job in _jobGraphics.Values)
-      {
-        Destroy(job);
-      }
+  //public void OnHandle(WorldUpdateEvent message)
+  //{
+  //  if (message.Reset)
+  //  {
+  //    //  a new world has been set up
+  //    //
+  //    foreach (var job in _jobGraphics.Values)
+  //    {
+  //      Destroy(job);
+  //    }
 
-      _jobGraphics = new Dictionary<Job, GameObject>();
-    }
-  }
+  //    _jobGraphics = new Dictionary<Job, GameObject>();
+  //  }
+  //}
   public void OnHandle(JobUpdateEvent message)
   {
     if (message.Job.IsCompleted())

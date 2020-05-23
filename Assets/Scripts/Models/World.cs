@@ -112,6 +112,8 @@ public class World
 
   #region Rooms
 
+  long nextRoomId = 1;
+
   private void DetectRooms(Item item)
   {
     Debug.Log($"Start => DetectRooms for {item.Tile.Position} : Rooms {_rooms.Count}");
@@ -159,6 +161,8 @@ public class World
 
     //  create a new room
     var room = new Room();
+    room.id = nextRoomId++;
+
     var tilesToCheck = new Queue<Tile>();
     tilesToCheck.Enqueue(sourceTile);
 
@@ -438,7 +442,8 @@ public class World
 
   private void CreatePrototypes()
   {
-    var abstractFactory = IoC.Get<AbstractItemFactory>();  
+    var abstractFactory = IoC.Get<AbstractItemFactory>();
+    abstractFactory.Initialize();
 
     //  wall
     var wallFactory = abstractFactory.CreateItemFactory(new Item(Item.Wall, 0f, true));

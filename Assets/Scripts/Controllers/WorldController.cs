@@ -8,12 +8,12 @@ using System.IO;
 using Unity.Collections;
 using UnityEngine.UIElements;
 
-public class WorldUpdateEvent : Event
-{
-  public bool Reset { get; set; }
-  public bool Paused { get; set; }
-  public bool UnPaused { get; set; }
-}
+//public class WorldUpdateEvent : Event
+//{
+//  public bool Reset { get; set; }
+//  public bool Paused { get; set; }
+//  public bool UnPaused { get; set; }
+//}
 
 
 /// <summary>
@@ -26,7 +26,7 @@ public class WorldController : MonoBehaviour
 
   World _world;
 
-  static string _filename;
+  static string _loadGameFileName;
 
   #endregion
 
@@ -55,23 +55,14 @@ public class WorldController : MonoBehaviour
   {
     Debug.Log("WorldController.Start");
 
-    if (_filename != null)
+    if (_loadGameFileName != null)
     {
-      Debug.Log("WorldController.LoadGame.Create");
-
-      var json = File.ReadAllText(_filename);
-      var saveGame = JsonUtility.FromJson<GameData>(json);
-
-      _world = World.LoadSaveGame(saveGame.world);
-
-      //  World is create we need to create all the ui elemements
-
-      LoadUiElements();
-
-      //  set the camera
-      Camera.main.transform.position = new Vector3(saveGame.camera_x, saveGame.camera_y, -10);
-
-      _world.Unpause();
+      //    load an existing game
+      LoadGame();
+    }
+    else
+    {
+      NewGame();
     }
   }
 
@@ -110,21 +101,71 @@ public class WorldController : MonoBehaviour
 
   #endregion
 
+  #region Menu
+
+  public void OnNewGame()
+  {
+    Debug.Log("WorldController.Menu.OnNewGame");
+
+    //  pause the current world
+    _world?.Pause();
+
+    //  clear the load file name
+    _loadGameFileName = null;
+
+    //  Reload Scene
+    SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+  }
+
+  public void OnLoadGame()
+  {
+    Debug.Log("WorldController.Menu.OnLoadGame");
+
+    //  pause the current world
+    _world?.Pause();
+
+    //  set the load game file name
+    _loadGameFileName = @"d:\[unity]\geo.txt";
+
+    //  Reload Scene
+    SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+  }
+
+  public void OnSaveGame()
+  {
+    Debug.Log("WorldController.Menu.OnSaveGame");
+
+    //  pause the current world
+    _world?.Pause();
+
+    SaveGame();
+
+    //  un pause the current world
+    _world?.Unpause();
+  }
+
+  #endregion
+
   #region Methods
 
   internal World GetWorld() => _world;
 
-  public void NewWorld()
+  internal void CreateResource(string resourceType, Tile tile)
   {
+    var resource = _world.CreateBuildingResource(tile, resourceType);
+    new BuildingResourceUpdatedEvent { Resource = resource }.Publish();
+  }
+
+  public void NewGame()
+  {
+    Debug.Log("NewGame");
+
     //  Creates a new world
     //
-    new WorldUpdateEvent { Reset = true }.Publish();
-
-    //_world = new World(100, 100);
     _world = new World(100, 100);
 
-    Debug.Log("CreateWorldGame");
-
+    //  Create all ui tiles
+    //
     for (int x = 0; x < _world.Width; x++)
     {
       for (int y = 0; y < _world.Height; y++)
@@ -136,7 +177,6 @@ public class WorldController : MonoBehaviour
       }
     }
 
-    Debug.Log("CreateWorldGame.Done");
 
     //	center camera to the middle of the world view
     //
@@ -151,36 +191,32 @@ public class WorldController : MonoBehaviour
     }
 
     _world?.Unpause();
+
+    Debug.Log("CreateWorldGame.Done");
   }
 
-  internal void CreateResource(string resourceType, Tile tile)
+  public void LoadGame()
   {
-    var resource = _world.CreateBuildingResource(tile, resourceType);
-    new BuildingResourceUpdatedEvent { Resource = resource }.Publish();
+    Debug.Log("WorldController.LoadGame");
+
+    var json = File.ReadAllText(_loadGameFileName);
+    var saveGame = JsonUtility.FromJson<GameData>(json);
+
+    _world = World.LoadSaveGame(saveGame.world);
+
+    //  World is create we need to create all the ui elemements
+
+    LoadUiElements();
+
+    //  set the camera
+    Camera.main.transform.position = new Vector3(saveGame.camera_x, saveGame.camera_y, -10);
+
+    Debug.Log("WorldController.LoadGame.Done");
+
+    _world.Unpause();
   }
 
-  public void LoadWorld()
-  {
-    Debug.Log("WorldController.LoadGame.Menu");
-
-    //  pause the current world
-    _world?.Pause();
-
-    new WorldUpdateEvent { Reset = true }.Publish();
-
-    SceneManager.LoadScene(SceneManager.GetActiveScene().name);
-
-    _filename = @"d:\[unity]\geo.txt";
-  }
-
-  internal void CreateJob(Job job)
-  {
-    _world.AddJob(job);
-
-    new JobUpdateEvent { Job = job }.Publish();
-  }
-
-  public void SaveWorld()
+  public void SaveGame()
   {
     var savegame = new GameData
     {
@@ -194,6 +230,14 @@ public class WorldController : MonoBehaviour
 
     File.WriteAllText(@"d:\[unity]\geo.txt", json);
   }
+
+  internal void CreateJob(Job job)
+  {
+    _world.AddJob(job);
+
+    new JobUpdateEvent { Job = job }.Publish();
+  }
+
 
   #endregion
 
@@ -230,7 +274,7 @@ public class WorldController : MonoBehaviour
 
   #region internal Helpers
 
-  
+
 
   #endregion
 }
