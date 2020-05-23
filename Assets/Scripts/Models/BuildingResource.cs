@@ -74,6 +74,8 @@ public class BuildingResource
     Id = data.id;
     Type = data.type;
     Tile = world.GetTile(data.x, data.y);
+    Tile.ResourcePile = this;
+    World = world;
     Amount = data.amount;
     AmountReserved = data.amount_reserved;
   }

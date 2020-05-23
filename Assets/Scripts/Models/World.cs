@@ -134,7 +134,7 @@ public class World
     Debug.Log($"DetectRooms flood ended");
 
     //  this is now a room encloser, so it cannot be part of a room
-    oldRoom.Unlink(item.Tile);    
+    oldRoom.Unlink(item.Tile);
 
     if (oldRoom != GetOutside())
     {
@@ -207,7 +207,7 @@ public class World
 
     if (room == GetOutside())
       return;
-    
+
     _rooms.Remove(room);
     room.UnassignAllTiles();
   }
@@ -281,19 +281,22 @@ public class World
 
   public BuildingResource CreateBuildingResource(Tile tile, string type)
   {
-    var resource = new BuildingResource(type, tile, amount: 5);
-    resource.Id = _nextBuildingId++;
-    resource.World = this;
+    tile.ResourcePile = new BuildingResource(type, tile, amount: 5)
+    {
+      Id = _nextBuildingId++,
+      World = this
+    };
 
-    _buildingResources.Add(resource);
-    return resource;
+    _buildingResources.Add(tile.ResourcePile);
+    return tile.ResourcePile;
   }
-  
+
   internal BuildingResource SelectResourcePile(string type)
     => _buildingResources?.FirstOrDefault(resource => resource.Type == type && resource.CanTakeResource());
 
   public void RemoveBuildingResource(BuildingResource resource)
   {
+    resource.Tile.ResourcePile = null;
     _buildingResources.Remove(resource);
   }
 
@@ -417,7 +420,6 @@ public class World
     foreach (var buildingResource in data.building_resources)
     {
       var resource = new BuildingResource(buildingResource, world);
-      resource.World = world;
       world._buildingResources.Add(resource);
 
       if (world._nextBuildingId <= resource.Id)
@@ -451,8 +453,8 @@ public class World
     wallFactory.BuildSound = "welding";
     wallFactory.SetBuildRule((tile, factory) =>
     {
-      return tile.Type == Tile.TileType.Floor &&  //  a wall must be build on a floor tile  and
-             tile.Item == null &&                 //  must be empty and
+      return tile.Type == Tile.TileType.Floor &&  //  a wall must be build on a floor tile
+             tile.IsOccupied == false &&          //  must not be occupied
              tile.ActiveJob == null;              //  no job active
     });
 
@@ -468,7 +470,7 @@ public class World
 
     doorFactory.SetBuildRule((tile, factory) =>
     {
-      if (tile.Type != Tile.TileType.Floor || tile.Item != null || tile.ActiveJob != null)
+      if (tile.Type != Tile.TileType.Floor || tile.IsOccupied || tile.ActiveJob != null)
         return false;
 
       //  door must have wall to north & south, or east & west

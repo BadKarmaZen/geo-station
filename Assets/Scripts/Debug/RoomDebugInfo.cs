@@ -7,16 +7,15 @@ public class RoomDebugInfo : MonoBehaviour
   , IHandle<MouseUpdateEvent>
 {
   Text _text;
+  Tile _tile;
 
   public void OnHandle(MouseUpdateEvent message)
   {
-    if (message.Tile.Room == null)
+    _tile = message.Tile;
+    if (_tile == null)
     {
-      _text.text = $"*** Tile lost Room ***";
-      return;
+      _text.text = string.Empty;
     }
-
-    _text.text = $"Room {message.Tile.Room.id}";
   }
 
   // Start is called before the first frame update
@@ -32,5 +31,19 @@ public class RoomDebugInfo : MonoBehaviour
     {
       IoC.Get<EventAggregator>().Subscribe(this);
     }
+  }
+
+  void Update()
+  {
+    if (_tile == null)
+      return;
+
+    if (_tile.Room == null)
+    {
+      _text.text = $"*** Tile lost Room ***";
+      return;
+    }
+
+    _text.text = $"Room {_tile.Room.id}";
   }
 }

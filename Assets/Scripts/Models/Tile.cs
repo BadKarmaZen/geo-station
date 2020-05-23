@@ -52,7 +52,12 @@ public class Tile
 
   public TileType Type { get; set; } = TileType.Space;
 
+  //  a tile is occupied if there is already an item on it, or a resource pile
+  public bool IsOccupied => Item != null || ResourcePile != null;
+
   public Item Item { get; set; }
+
+  public BuildingResource ResourcePile { get; set; }
 
   public Job ActiveJob { get; set; }
 

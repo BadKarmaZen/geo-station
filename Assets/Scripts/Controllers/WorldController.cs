@@ -152,6 +152,12 @@ public class WorldController : MonoBehaviour
 
   internal void CreateResource(string resourceType, Tile tile)
   {
+    if (tile.IsOccupied)
+    {
+      Debug.Log("Tile already contains resources");
+      return;
+    }
+
     var resource = _world.CreateBuildingResource(tile, resourceType);
     new BuildingResourceUpdatedEvent { Resource = resource }.Publish();
   }

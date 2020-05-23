@@ -7,17 +7,15 @@ public class ItemDebugInfo : MonoBehaviour
   , IHandle<MouseUpdateEvent>
 {
   Text _text;
+  Tile _tile;
 
   public void OnHandle(MouseUpdateEvent message)
   {
-    if (message.Tile.Item != null)
+    _tile = message.Tile;
+    if (_tile == null)
     {
-      _text.text = $"Item : {message.Tile.Item.Type}";
-    }
-    else
-    {
-      _text.text = $"Item :  Null";
-    }    
+      _text.text = string.Empty;
+    }   
   }
 
   // Start is called before the first frame update
@@ -38,6 +36,23 @@ public class ItemDebugInfo : MonoBehaviour
   // Update is called once per frame
   void Update()
   {
-    //_text.text = $"{Time.deltaTime}";
+    if (_tile == null)
+      return;
+
+    if (!_tile.IsOccupied)
+    {
+      _text.text = $"not occupied";
+      return;
+    }
+
+    //  either item or resource pile present
+    if (_tile.Item != null)
+    {
+      _text.text = $"Item : {_tile.Item.Type}";
+    }
+    else
+    {
+      _text.text = $"Resource : {_tile.ResourcePile.Type} ({_tile.ResourcePile.Amount})";
+    }
   }
 }
