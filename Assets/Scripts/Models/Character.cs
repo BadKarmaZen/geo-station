@@ -163,6 +163,11 @@ public class Character
         //  we have resource, and are not at job location
         //
         SetDestination(CurrentJob.Tile);
+
+        if (DestinationTile == null)
+        {
+          Debug.LogError("CANNOT reach job help");
+        }
         return;
       }
 

@@ -181,7 +181,7 @@ public class JobController : MonoBehaviour
     //if (job.Item.Type == Item.Door)
     if (job.Item == Item.Door)
     {
-      var factory = IoC.Get<ObjectFactory>().GetFactory(job.Item);
+      var factory = IoC.Get<AbstractItemFactory>().GetItemFactory(job.Item);
 
       //  check surrounding tiles
       var neighbours = IoC.Get<WorldController>().GetNeighbourTiles(job.Tile, tile => factory.IsValidNeighbour(tile.Item?.Type));

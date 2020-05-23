@@ -86,28 +86,23 @@ public class BuildController : MonoBehaviour, IHandle<DragEvent>
         }
         else if (_buildAction == BuildAction.FixedObject)
         {
-          //  check if we have resources
-          //var resource = _resources.FirstOrDefault(r => r.Type == _buildType && r.AmountLeft > 0);
-
-          //if (resource == null)
-          //{
-          //  //  no resources left
-          //  return;
-          //}
-
-          //resource.Reserve();
-
-          //  yes we can build a wall
-          var item = IoC.Get<ObjectFactory>().CreateItem(_buildType, tile);
-
-          if (item != null)
+          //  can we build here
+          if (IoC.Get<AbstractItemFactory>().CanBuildItem(_buildType, tile))
           {
             //  Create a job for it
-            IoC.Get<WorldController>().CreateJob(new Job(tile, item.Type, item.Type == "Door" ? 0.5f : 1f));
-
-            //  TODO ? jobcontroller
-            //new ItemUpdatedEvent { Item = item }.Publish();
+            IoC.Get<WorldController>().CreateJob(new Job(tile, _buildType, IoC.Get<AbstractItemFactory>().GetBuildTime(_buildType)));
           }
+
+          //var item = IoC.Get<ObjectFactory>().CreateItem(_buildType, tile);
+
+          //if (item != null)
+          //{
+          //  //  Create a job for it
+          //  IoC.Get<WorldController>().CreateJob(new Job(tile, item.Type, item.Type == "Door" ? 0.5f : 1f));
+
+          //  //  TODO ? jobcontroller
+          //  //new ItemUpdatedEvent { Item = item }.Publish();
+          //}
         }
         else
         {

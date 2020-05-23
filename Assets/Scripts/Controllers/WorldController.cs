@@ -40,11 +40,8 @@ public class WorldController : MonoBehaviour
     IoC.Initialize();
 
     IoC.RegisterType<GameObjectFactory>();
-    IoC.RegisterType<ObjectFactory>();
+    IoC.RegisterType<AbstractItemFactory>();
     IoC.RegisterInstance(this);
-
-    //  TODO : improve to some core location
-    CreatePrototypes();
   }
 
   public void OnEnable()
@@ -123,6 +120,7 @@ public class WorldController : MonoBehaviour
     //
     new WorldUpdateEvent { Reset = true }.Publish();
 
+    //_world = new World(100, 100);
     _world = new World(100, 100);
 
     Debug.Log("CreateWorldGame");
@@ -232,58 +230,7 @@ public class WorldController : MonoBehaviour
 
   #region internal Helpers
 
-  private void CreatePrototypes()
-  {
-    var objectFactory = IoC.Get<ObjectFactory>();
-
-    //  wall
-    var wallFactory = objectFactory.CreateFactory(new Item(Item.Wall, 0f));
-    wallFactory.AddBuildRule((tile, factory) =>
-    {
-      return tile.Type == Tile.TileType.Floor &&  //  a wall must be build on a floor tile  and
-             tile.Item == null &&                 //  must be empty and
-             tile.ActiveJob == null;              //  no job active
-    });
-
-    wallFactory.BuildSound = "welding";
-
-    var doorPrototype = new Item(Item.Door, 1.2f);
-    var doorFactory = objectFactory.CreateFactory(doorPrototype, Item.Wall);
-
-    doorPrototype.Parameters["openness"] = 0f;
-    doorPrototype.Parameters["is_opening"] = 0f;
-    doorPrototype.UpdateActions += ItemActions.DoorUpdateAction;
-    doorPrototype.IsEnterable = ItemActions.DoorIsEnterable;
-
-    doorFactory.AddBuildRule((tile, factory) =>
-    {
-      if (tile.Type != Tile.TileType.Floor || tile.Item != null || tile.ActiveJob != null)
-        return false;
-
-      //  door must have wall to north & south, or east & west
-      var north = _world.GetTile(tile.Position.GetNorth());
-      var south = _world.GetTile(tile.Position.GetSouth());
-
-      if (factory.IsValidNeighbour(north?.Item?.Type) &&
-          factory.IsValidNeighbour(south?.Item?.Type))
-      {
-        return true;
-      }
-
-      var west = _world.GetTile(tile.Position.GetWest());
-      var east = _world.GetTile(tile.Position.GetEast());
-
-      if (factory.IsValidNeighbour(west?.Item?.Type) &&
-          factory.IsValidNeighbour(east?.Item?.Type))
-      {
-        return true;
-      }
-
-      return false;
-    });
-
-    doorFactory.BuildSound = "welding";
-  }
+  
 
   #endregion
 }

@@ -236,17 +236,11 @@ public class SpriteController : MonoBehaviour
   void Start()
   {
     //Debug.Log($"SpriteController.Start");
-
-
-    //var world = IoC.Get<World>();
-    //CreateWorldGame(world);
-    //world.Randomioze();
   }
 
   // Update is called once per frame
   void Update()
   {
-
     //  TODO need to move?
     foreach (var pair in _itemGraphics)
     {
@@ -374,7 +368,7 @@ public class SpriteController : MonoBehaviour
   private string BuildItemSpriteName(Item item)
   {
     var spriteName = item.Type + "_";
-    var factory = IoC.Get<ObjectFactory>().GetFactory(item);
+    var factory = IoC.Get<AbstractItemFactory>().GetItemFactory(item);
 
     var neighbours = IoC.Get<WorldController>().GetNeighbourTiles(item.Tile, tile => factory.IsValidNeighbour(tile.Item?.Type));
 

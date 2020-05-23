@@ -40,6 +40,7 @@ public class Job
     Tile = tile;
     Item = type;
     BuildTime = buildTime;
+    Tile.ActiveJob = this;
   }
 
   #endregion
@@ -65,7 +66,7 @@ public class Job
       Busy = false;
 
       //  create iteme
-      var item = IoC.Get<ObjectFactory>().GetFactory(Item).CreateItem(Tile);
+      var item = IoC.Get<AbstractItemFactory>().CreateItem(Item, Tile);
       Tile.InstallItem(item);
 
       return true;

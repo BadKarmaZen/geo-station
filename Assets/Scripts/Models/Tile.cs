@@ -46,6 +46,9 @@ public class Tile
   #region Properties
 
   public Position Position { get; set; }
+  
+  //  a tile can only be in 1 room
+  public Room Room { get; set; }
 
   public TileType Type { get; set; } = TileType.Space;
 
@@ -54,8 +57,6 @@ public class Tile
   public Job ActiveJob { get; set; }
 
   public World World { get; set; }
-
-  public bool JobScheduled { get; set; }
 
   #endregion
 
@@ -97,6 +98,11 @@ public class Tile
   {
     return Item == null ? Enterable.Yes : Item.IsEnterable(Item);
   }
+
+  public Tile GetNorthTile() => World.GetTile(Position.GetNorth());
+  public Tile GetSouthTile() => World.GetTile(Position.GetSouth());
+  public Tile GetEastTile() => World.GetTile(Position.GetEast());
+  public Tile GetWestTile() => World.GetTile(Position.GetWest());
 
   #endregion
 

@@ -29,6 +29,7 @@ public class Item
 
   //	cost to move over object
   public float MovementCost { get; protected set; }
+  public bool RoomEnclosure { get; protected set; }
 
   //  Component Model
   public Dictionary<string, float> Parameters { get; set; }
@@ -47,10 +48,11 @@ public class Item
   #region constructors
 
   //	used for protorype
-  public Item(string type, float movement)
+  public Item(string type, float movement, bool roomEnclosure)
   {
     Type = type;
     MovementCost = movement;
+    RoomEnclosure = roomEnclosure;
 
     Parameters = new Dictionary<string, float>();
   }
@@ -59,6 +61,7 @@ public class Item
   {
     Type = prototype.Type;
     MovementCost = prototype.MovementCost;
+    RoomEnclosure = prototype.RoomEnclosure;
 
     Parameters = new Dictionary<string, float>();
 
