@@ -679,7 +679,7 @@ MonoBehaviour:
           m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
           m_IntArgument: 0
           m_FloatArgument: 0
-          m_StringArgument: Wall
+          m_StringArgument: O2_generator
           m_BoolArgument: 0
         m_CallState: 2
 --- !u!114 &422801847
