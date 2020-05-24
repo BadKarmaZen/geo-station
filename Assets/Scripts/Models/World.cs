@@ -25,6 +25,8 @@ public class World
   #region Properties
 
   public bool IsPaused { get; private set; }
+  public Inventory Inventory { get; internal set; } = new Inventory();
+
   public Room GetOutside() => _rooms[0];
 
   #endregion
@@ -85,7 +87,26 @@ public class World
 
     UpdateJobs(deltaTime);
     UpdateBuildingResources(deltaTime);
+  }
 
+  private List<Tile> _deliveryTiles = new List<Tile>();
+  internal void UpdateTile(Tile tile, TileType oldType, TileType newType)
+  {
+    if (oldType == TileType.Delivery)
+    {
+      //  We lost a place to put our deliveries
+      _deliveryTiles.Remove(tile);      
+    }
+    else if (newType == TileType.Delivery)
+    {
+      //  we have gained an delivery tile
+      _deliveryTiles.Add(tile);
+    }
+  }
+
+  public IEnumerable<Tile> GetFreeDeliveryTiles()
+  {
+    return _deliveryTiles.Where(tile => tile.ResourcePile == null);
   }
 
   public Character CreateCharacter(Tile tile)
@@ -199,6 +220,12 @@ public class World
     _rooms.Add(room);
   }
 
+  internal BuildingResource CreateBuildingResource(string resource)
+  {
+    return new BuildingResource(resource, null, 20);
+    //  TODO need to add this to the save game
+  }
+
   public void RemoveRoom(Room room)
   {
     if (room._tiles.Count != 0)
@@ -214,7 +241,6 @@ public class World
   }
 
   #endregion
-
 
   #region Jobs
 

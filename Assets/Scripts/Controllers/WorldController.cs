@@ -93,6 +93,11 @@ public class WorldController : MonoBehaviour
     }
   }
 
+  internal Inventory GetInventory()
+  {
+    return _world.Inventory;
+  }
+
   // Update is called once per frame
   void Update()
   {
@@ -150,16 +155,21 @@ public class WorldController : MonoBehaviour
 
   internal World GetWorld() => _world;
 
-  internal void CreateResource(string resourceType, Tile tile)
-  {
-    if (tile.IsOccupied)
-    {
-      Debug.Log("Tile already contains resources");
-      return;
-    }
+  //internal void CreateResource(string resourceType, Tile tile)
+  //{
+  //  if (tile.IsOccupied)
+  //  {
+  //    Debug.Log("Tile already contains resources");
+  //    return;
+  //  }
 
-    var resource = _world.CreateBuildingResource(tile, resourceType);
-    new BuildingResourceUpdatedEvent { Resource = resource }.Publish();
+  //  var resource = _world.CreateBuildingResource(tile, resourceType);
+  //  new BuildingResourceUpdatedEvent { Resource = resource }.Publish();
+  //}
+
+  public BuildingResource RequestShipment(string resource)
+  {
+    return _world.CreateBuildingResource(resource);
   }
 
   public void NewGame()
@@ -242,6 +252,9 @@ public class WorldController : MonoBehaviour
   {
     _world.AddJob(job);
 
+    //  get resources
+    IoC.Get<ShipmentController>().RequestResources(job.Item);
+
     new JobUpdateEvent { Job = job }.Publish();
   }
 
@@ -276,6 +289,10 @@ public class WorldController : MonoBehaviour
   }
 
   internal Tile GetTile(Position position) => _world?.GetTile(position);
+
+  internal void UpdateTileInfo(Tile tile)
+  {
+  }
 
   #endregion
 

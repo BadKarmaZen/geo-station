@@ -14,6 +14,10 @@ public class ShipmentController : MonoBehaviour
   public bool IsUndocking;
 
   public float _movementCompletePercentage;
+  public float _shipmentTimer = 10; //  every 10 seconds
+
+  public Queue<string> _shipmentRequest = new Queue<string>();
+  public List<BuildingResource> _buildingResources = new List<BuildingResource>();
 
   void Awake()
   {
@@ -29,7 +33,29 @@ public class ShipmentController : MonoBehaviour
   // Update is called once per frame
   void Update()
   {
-    
+    _shipmentTimer -= Time.deltaTime;
+
+    if (_shipmentTimer <= 0)
+    {      
+      _shipmentTimer = 10;  //  reset
+
+      //  do action
+      while (_shipmentRequest.Count != 0 && _buildingResources.Count < 2)
+      {
+        //  create the resource
+        var resoure = IoC.Get<WorldController>().RequestShipment(_shipmentRequest.Dequeue());
+        _buildingResources.Add(resoure);
+      }
+
+      if (_buildingResources.Count != 0)
+      {
+        Debug.Log("Start Docking");
+        
+        _movementCompletePercentage = 0;
+        IsDocking = true;
+      }
+    }
+
     if (IsDocking)
     {
       float totalDistance = Mathf.Abs(start_position_x - 51);
@@ -69,13 +95,17 @@ public class ShipmentController : MonoBehaviour
     }
   }
 
-  public void RequestResources()
+  public void RequestResources(string resource)
   {
-    Debug.Log("Start Docking");
-    //  set destination to docking area
-    //Destination = new Position(51, 50);
-    _movementCompletePercentage = 0;
-    IsDocking = true;
+    //  check free resources
+    var controller = IoC.Get<WorldController>();
+    var inventory = controller.GetInventory();
+
+    if (inventory.GetAvailableAmount(resource) == 0)
+    {
+      //  Order resource shipment
+      _shipmentRequest.Enqueue(resource);
+    }
   }
 
   public void TakeShipment()

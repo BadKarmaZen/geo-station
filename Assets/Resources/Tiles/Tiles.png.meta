@@ -11,6 +11,9 @@ TextureImporter:
   - first:
       213: -4684333735789482159
     second: Tiles_Docking
+  - first:
+      213: -5062486230716756072
+    second: Tiles_Delivery
   externalObjects: {}
   serializedVersion: 11
   mipmaps:
@@ -154,6 +157,27 @@ TextureImporter:
       bones: []
       spriteID: 15fa3e43947edfeb0800000000000000
       internalID: -4684333735789482159
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Tiles_Delivery
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 192
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 89f42d9689f6eb9b0800000000000000
+      internalID: -5062486230716756072
       vertices: []
       indices: 
       edges: []

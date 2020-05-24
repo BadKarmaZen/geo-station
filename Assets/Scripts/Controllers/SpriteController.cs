@@ -298,6 +298,7 @@ public class SpriteController : MonoBehaviour
       SpriteRenderer renderer = graphic.GetComponent<SpriteRenderer>();
 
       var spriteName = "Tiles_Space";
+
       if (tile.Type == TileType.Floor)
       {
         spriteName = "Tiles_Floor";
@@ -306,7 +307,10 @@ public class SpriteController : MonoBehaviour
       {
         spriteName = "Tiles_Docking";
       }
-
+      else if (tile.Type == TileType.Delivery)
+      {
+        spriteName = "Tiles_Delivery";
+      }
       renderer.sprite = _resourceCollection.GetSprite(spriteName);
     }
     else

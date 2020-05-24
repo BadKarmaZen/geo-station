@@ -36,14 +36,12 @@ public class UpdateItemEvent : ItemEvent { }
 /// Space: outer furniture: solar panel, satelite, antenna ...
 /// Floos: part of the space station: wall, door, computer, bed, ...
 /// </summary>
-public enum TileType { Space, Floor, Docking };
+public enum TileType { Space, Floor, Docking, Delivery };
 
 #endregion
 
 public class Tile
 {
-
-
   #region Properties
 
   public Position Position { get; set; }
@@ -82,11 +80,10 @@ public class Tile
   {
     if (Type != type)
     {
+      World.UpdateTile(this, Type, type);
       Type = type;
 
       new UpdateTileEvent { Tile = this }.Publish();
-
-      //IoC.Get<EventAggregator>().Publish(new TileUpdateEvent { Tile = this });
     }
   }
 

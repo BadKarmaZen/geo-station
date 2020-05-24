@@ -20,6 +20,7 @@ public class BuildController : MonoBehaviour
     Nothing,
     Destruct,
     Floor,
+    Delivery,
     FixedObject,
     Resource,
   }
@@ -58,45 +59,50 @@ public class BuildController : MonoBehaviour
 
   public void OnHandle(MouseClickEvent message)
   {
-    //  single click event
-    //
-    if (_buildAction == BuildAction.Resource)
-    {
-      IoC.Get<WorldController>().CreateResource(_resourceType, message.Tile);
-    }
-    else if (_buildAction == BuildAction.Floor)
-    {
-      message.Tile.SetType(TileType.Floor);
-    }
-    else if (_buildAction == BuildAction.Destruct)
-    {
-      message.Tile.SetType(TileType.Space);
-    }
-    else if (_buildAction == BuildAction.FixedObject)
-    {
-      //  can we build here
-      var factory = IoC.Get<AbstractItemFactory>();
-
-      if (factory.IsMultiTile(_buildType))
-      {
-        var buildOnTiles = factory.GetTilesToBuildOn(_buildType, message.Tile, _rotate);
-        
-        if (factory.CanBuildItem(_buildType, buildOnTiles))
-        {
-          IoC.Get<WorldController>().CreateJob(new Job(_buildType, message.Tile, factory.GetBuildTime(_buildType), _rotate));
-        } 
-      }
-      else
-      {
-        if (factory.CanBuildItem(_buildType, message.Tile))
-        {
-          //  Create a job for it
-          IoC.Get<WorldController>().CreateJob(new Job(_buildType, message.Tile, factory.GetBuildTime(_buildType)));
-        }
-      }      
-    }
-
+    DoBuild(message.Tile);
     _rotate = 0;
+
+    ////  single click event
+    ////
+    //if (_buildAction == BuildAction.Resource)
+    //{
+    //  IoC.Get<WorldController>().CreateResource(_resourceType, message.Tile);
+    //}
+    //else if (_buildAction == BuildAction.Floor)
+    //{
+    //  message.Tile.SetType(TileType.Floor);
+    //}
+    //else if (_buildAction == BuildAction.Delivery)
+    //{
+    //  message.Tile.SetType(TileType.Delivery);
+    //}
+    //else if (_buildAction == BuildAction.Destruct)
+    //{
+    //  message.Tile.SetType(TileType.Space);
+    //}
+    //else if (_buildAction == BuildAction.FixedObject)
+    //{
+    //  //  can we build here
+    //  var factory = IoC.Get<AbstractItemFactory>();
+
+    //  if (factory.IsMultiTile(_buildType))
+    //  {
+    //    var buildOnTiles = factory.GetTilesToBuildOn(_buildType, message.Tile, _rotate);
+
+    //    if (factory.CanBuildItem(_buildType, buildOnTiles))
+    //    {
+    //      IoC.Get<WorldController>().CreateJob(new Job(_buildType, message.Tile, factory.GetBuildTime(_buildType), _rotate));
+    //    } 
+    //  }
+    //  else
+    //  {
+    //    if (factory.CanBuildItem(_buildType, message.Tile))
+    //    {
+    //      //  Create a job for it
+    //      IoC.Get<WorldController>().CreateJob(new Job(_buildType, message.Tile, factory.GetBuildTime(_buildType)));
+    //    }
+    //  }      
+    //}
   }
 
   public void OnHandle(MouseDragEvent message)
@@ -115,32 +121,46 @@ public class BuildController : MonoBehaviour
     {
       ClearDragPreview();
 
-      //  TODO - remove test => needs to go to job que
-      var tiles = IoC.Get<WorldController>().GetTiles(_dragFrom, _dragTo);
+      var worldcontroller = IoC.Get<WorldController>();
+      var tiles = worldcontroller.GetTiles(_dragFrom, _dragTo);
 
       foreach (var tile in tiles)
       {
-        if (_buildAction == BuildAction.Floor)
-        {
-          tile.SetType(TileType.Floor);
-        }
-        else if (_buildAction == BuildAction.Destruct)
-        {
-          tile.SetType(TileType.Space);
-        }
-        else if (_buildAction == BuildAction.FixedObject)
-        {
-          //  can we build here
-          if (IoC.Get<AbstractItemFactory>().CanBuildItem(_buildType, tile))
-          {
-            //  Create a job for it
-            IoC.Get<WorldController>().CreateJob(new Job(_buildType, tile, IoC.Get<AbstractItemFactory>().GetBuildTime(_buildType)));
-          }
-        }
+        DoBuild(tile);
       }
+
 
       _dragFrom = null;
       _dragTo = null;
+      ////  TODO - remove test => needs to go to job que
+      //var worldController = IoC.Get<WorldController>();
+      //var tiles = worldController.GetTiles(_dragFrom, _dragTo);
+
+      //foreach (var tile in tiles)
+      //{
+      //  if (_buildAction == BuildAction.Floor)
+      //  {
+      //    tile.SetType(TileType.Floor);
+      //  }
+      //  else if (_buildAction == BuildAction.Delivery)
+      //  {
+      //    message.Tile.SetType(TileType.Delivery);
+      //  }
+      //  else if (_buildAction == BuildAction.Destruct)
+      //  {
+      //    tile.SetType(TileType.Space);
+      //  }
+      //  else if (_buildAction == BuildAction.FixedObject)
+      //  {
+      //    //  can we build here
+      //    if (IoC.Get<AbstractItemFactory>().CanBuildItem(_buildType, tile))
+      //    {
+      //      //  Create a job for it
+      //      IoC.Get<WorldController>().CreateJob(new Job(_buildType, tile, IoC.Get<AbstractItemFactory>().GetBuildTime(_buildType)));
+      //    }
+      //  }
+      //}
+
     }
   }
 
@@ -239,11 +259,18 @@ public class BuildController : MonoBehaviour
 
   }
 
+  #endregion
+
   #region Menu Action
 
   public void BuildFloor()
   {
     _buildAction = BuildAction.Floor;
+  }
+
+  public void BuildDelivery()
+  {
+    _buildAction = BuildAction.Delivery;
   }
 
   public void DestructTile()
@@ -268,10 +295,57 @@ public class BuildController : MonoBehaviour
 
   #endregion
 
-
-  #endregion
-
   #region Helpers
+
+  private void DoBuild(Tile tile)
+  {
+    //if (_buildAction == BuildAction.Resource)
+    //{
+    //  IoC.Get<WorldController>().CreateResource(_resourceType, tile);
+    //}
+    //else
+    if (_buildAction != BuildAction.FixedObject)
+    {
+      if (_buildAction == BuildAction.Floor)
+      {
+        tile.SetType(TileType.Floor);
+      }
+      else if (_buildAction == BuildAction.Delivery)
+      {
+        tile.SetType(TileType.Delivery);
+      }
+      else if (_buildAction == BuildAction.Destruct)
+      {
+        tile.SetType(TileType.Space);
+      }
+
+      //  the word needs to know about this
+      IoC.Get<WorldController>().UpdateTileInfo(tile);
+    }
+    else if (_buildAction == BuildAction.FixedObject)
+    {
+      //  can we build here
+      var factory = IoC.Get<AbstractItemFactory>();
+
+      if (factory.IsMultiTile(_buildType))
+      {
+        var buildOnTiles = factory.GetTilesToBuildOn(_buildType, tile, _rotate);
+
+        if (factory.CanBuildItem(_buildType, buildOnTiles))
+        {
+          IoC.Get<WorldController>().CreateJob(new Job(_buildType, tile, factory.GetBuildTime(_buildType), _rotate));
+        }
+      }
+      else
+      {
+        if (factory.CanBuildItem(_buildType, tile))
+        {
+          //  Create a job for it
+          IoC.Get<WorldController>().CreateJob(new Job(_buildType, tile, factory.GetBuildTime(_buildType)));
+        }
+      }
+    }
+  }
 
   private void UpdatePreviewSprite()
   {
@@ -282,7 +356,6 @@ public class BuildController : MonoBehaviour
       _previewGameObject.GetComponent<SpriteRenderer>().sprite = _resouceCollection.GetSprite(spritename);
     }
   }
-
 
   private void ShowDragPreview()
   {
