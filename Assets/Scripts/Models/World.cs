@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.IO;
 using System.Linq;
+using TMPro;
 using UnityEngine;
 using UnityEngine.Assertions.Must;
 
@@ -380,7 +381,7 @@ public class World
     var data = new WorldData { width = Width, height = Height };
 
     data.tiles = GetAllTiles(tile => tile.Type == Tile.TileType.Floor).Select(tile => tile.ToData()).ToList();
-
+    data.items = _items.Select(item => item.ToData()).ToList();
     data.jobs = _jobs.Select(job => job.ToData()).ToList();
     data.characters = _characters.Select(character => character.ToData()).ToList();
     data.building_resources = _buildingResources.Select(res => res.ToData()).ToList();
@@ -395,16 +396,16 @@ public class World
     //  reload tile information
     foreach (var tile in data.tiles)
     {
-      world._tiles[tile.x, tile.y].Type = Tile.TileType.Floor;
-
-      if (!string.IsNullOrWhiteSpace(tile.item))
-      {
-        var item = IoC.Get<AbstractItemFactory>().GetItemFactory(tile.item).LoadItem(world._tiles[tile.x, tile.y]);
-        world._items.Add(item);
-        world._tiles[tile.x, tile.y].Item = item;
-      }
+      world._tiles[tile.x, tile.y].Type = Tile.TileType.Floor;      
     }
 
+    //  load items
+    foreach (var item in data.items)
+    {
+      var worldItem = IoC.Get<AbstractItemFactory>().LoadItem(item.type, world.GetTile(item.x, item.y), item.rotation);
+      world._items.Add(worldItem);
+    }
+    
     //  create jobs
     foreach (var job in data.jobs)
     {
@@ -539,6 +540,7 @@ public class WorldData
   public int height;
 
   public List<TileData> tiles;
+  public List<ItemData> items;
   public List<JobData> jobs;
   public List<CharacterData> characters;
   public List<BuildingResourceData> building_resources;

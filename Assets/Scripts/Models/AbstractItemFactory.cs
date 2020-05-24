@@ -38,6 +38,18 @@ public class AbstractItemFactory
     return _itemFactories[itemType];
   }
 
+  public Item LoadItem(string type, Tile master, float rotation)
+  {
+    if (!_itemFactories.ContainsKey(type))
+    {
+      Debug.LogError($"no factory found for {type}");
+    }
+
+    var item = _itemFactories[type].LoadItem(master, rotation);
+    master.Item = item;
+    return item;
+  }
+
   #endregion
 
   #region Factory Methods
@@ -159,8 +171,48 @@ public class AbstractItemFactory
           spriteName += "W";
         }
       }
+    }
 
+    return spriteName;
+  }
 
+  internal string GetSpriteName(Job job)
+  {
+    if (!_itemFactories.ContainsKey(job.Item))
+    {
+      Debug.LogError($"no factory found for {job.Item}");
+      return string.Empty;
+    }
+
+    var spriteName = job.Item + "_";
+
+    if (IsMultiTile(job.Item))
+    {
+      spriteName += $"{job.Rotation}";
+    }
+    else
+    {
+      var neighbours = IoC.Get<WorldController>().GetNeighbourTiles(job.Tile, tile => GetItemFactory(job.Item).IsValidNeighbour(tile.Item?.Type));
+
+      foreach (var neighbour in neighbours)
+      {
+        if (neighbour.Position.IsNorthOf(job.Tile.Position))
+        {
+          spriteName += "N";
+        }
+        if (neighbour.Position.IsEastOf(job.Tile.Position))
+        {
+          spriteName += "E";
+        }
+        if (neighbour.Position.IsSouthOf(job.Tile.Position))
+        {
+          spriteName += "S";
+        }
+        if (neighbour.Position.IsWestOf(job.Tile.Position))
+        {
+          spriteName += "W";
+        }
+      }
     }
 
     return spriteName;

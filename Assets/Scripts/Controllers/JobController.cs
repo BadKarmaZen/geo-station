@@ -174,48 +174,49 @@ public class JobController : MonoBehaviour
 
   private string GetSpriteName(Job job)
   {
-    //var spriteName = job.Item.Type + "_";
-    var spriteName = job.Item + "_";
+    return IoC.Get<AbstractItemFactory>().GetSpriteName(job);
+    ////var spriteName = job.Item.Type + "_";
+    //var spriteName = job.Item + "_";
 
-    //  TODO improve
-    //if (job.Item.Type == Item.Door)
-    if (job.Item == Item.Door)
-    {
-      var factory = IoC.Get<AbstractItemFactory>().GetItemFactory(job.Item);
+    ////  TODO improve
+    ////if (job.Item.Type == Item.Door)
+    //if (job.Item == Item.Door)
+    //{
+    //  var factory = IoC.Get<AbstractItemFactory>().GetItemFactory(job.Item);
 
-      //  check surrounding tiles
-      var neighbours = IoC.Get<WorldController>().GetNeighbourTiles(job.Tile, tile => factory.IsValidNeighbour(tile.Item?.Type));
-      //from t in IoC.Get<World>().GetNeighbourTiles(job.Tile)
-      //               where 
-      //               select t;
+    //  //  check surrounding tiles
+    //  var neighbours = IoC.Get<WorldController>().GetNeighbourTiles(job.Tile, tile => factory.IsValidNeighbour(tile.Item?.Type));
+    //  //from t in IoC.Get<World>().GetNeighbourTiles(job.Tile)
+    //  //               where 
+    //  //               select t;
 
-      foreach (var neighbour in neighbours)
-      {
-        if (neighbour.Position.IsNorthOf(job.Tile.Position))
-        {
-          spriteName += "N";
-        }
-        if (neighbour.Position.IsEastOf(job.Tile.Position))
-        {
-          spriteName += "E";
-        }
-        if (neighbour.Position.IsSouthOf(job.Tile.Position))
-        {
-          spriteName += "S";
-        }
-        if (neighbour.Position.IsWestOf(job.Tile.Position))
-        {
-          spriteName += "W";
-        }
-      }
+    //  foreach (var neighbour in neighbours)
+    //  {
+    //    if (neighbour.Position.IsNorthOf(job.Tile.Position))
+    //    {
+    //      spriteName += "N";
+    //    }
+    //    if (neighbour.Position.IsEastOf(job.Tile.Position))
+    //    {
+    //      spriteName += "E";
+    //    }
+    //    if (neighbour.Position.IsSouthOf(job.Tile.Position))
+    //    {
+    //      spriteName += "S";
+    //    }
+    //    if (neighbour.Position.IsWestOf(job.Tile.Position))
+    //    {
+    //      spriteName += "W";
+    //    }
+    //  }
 
-      return spriteName;
+    //  return spriteName;
 
-    }
-    else
-    {
-      return spriteName;
-    }
+    //}
+    //else
+    //{
+    //  return spriteName;
+    //}
   }
 
   private void RemoveGraphics(Job job)

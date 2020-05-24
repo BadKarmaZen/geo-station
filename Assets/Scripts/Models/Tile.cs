@@ -125,7 +125,6 @@ public class Tile
     {
       x = Position.x,
       y = Position.y,
-      item = Item?.Type,
       job_id = ActiveJob?.Id ?? 0
     };
   }
@@ -139,6 +138,5 @@ public class TileData
   public int x;
   public int y;
 
-  public string item;
   public long job_id;
 }

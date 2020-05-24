@@ -62,7 +62,7 @@ public class ItemFactory
   public Item CreateItem(Tile tile, float rotation = 0) => new Item(Protoype, tile, this, rotation);
     //=> CanBuild(tile) ? new Item(Protoype, tile, this) : null;
 
-  public Item LoadItem(Tile tile) => new Item(Protoype, tile, this);
+  public Item LoadItem(Tile tile, float rotation) => new Item(Protoype, tile, this, rotation);
 
   internal void AddAction(string action, string from, string transition, string to, Func<Item, float, bool> updateAction, string idle = null)
   {

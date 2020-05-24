@@ -98,7 +98,30 @@ public class Item
   //  Parameters[parameter] = update(GetParameter<T>(parameter));
 
   #endregion
+
+  #region Save/Load
+
+  public Item(ItemData data, World world)
+  {
+    //  TODO
+  }
+
+  public ItemData ToData() => new ItemData
+  { 
+    type = Type,
+    x = Tile.Position.x,
+    y = Tile.Position.y,
+    rotation = Rotation
+  };
+
+  #endregion
 }
 
-
-
+[Serializable]
+public class ItemData
+{
+  public string type;
+  public int x;
+  public int y;
+  public float rotation;
+}
