@@ -96,7 +96,7 @@ public class Character
   {
     if (DestinationTile == null)
     {
-      var tiles = IoC.Get<WorldController>().GetNeighbourTiles(CurrentTile, tile => tile.Type == Tile.TileType.Floor).ToList();
+      var tiles = IoC.Get<WorldController>().GetNeighbourTiles(CurrentTile, tile => tile.Type == TileType.Floor).ToList();
 
       if (tiles.Count != 0)
       {
@@ -337,7 +337,7 @@ public class Character
 
   public bool SetDestination(Tile tile)
   {
-    if (tile.Type == Tile.TileType.Floor)
+    if (tile.Type == TileType.Floor)
     {
       //  Need to find path to
       var pathfinder = new PathFinding();

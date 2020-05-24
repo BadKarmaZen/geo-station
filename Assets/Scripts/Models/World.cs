@@ -157,7 +157,7 @@ public class World
     if (sourceTile.Item?.RoomEnclosure == true)
       return; //  this is a wall, ..., and cannot be part of a room
 
-    if (sourceTile.Type == Tile.TileType.Space)
+    if (sourceTile.Type == TileType.Space)
       return;
 
     //  create a new room
@@ -176,7 +176,7 @@ public class World
 
         foreach (var neighbour in GetNeighbourTiles(tile))
         {
-          if (neighbour.Type == Tile.TileType.Space)
+          if (neighbour.Type == TileType.Space)
           {
             //  we have reach the outside of
             //  clear the room
@@ -380,7 +380,7 @@ public class World
   {
     var data = new WorldData { width = Width, height = Height };
 
-    data.tiles = GetAllTiles(tile => tile.Type == Tile.TileType.Floor).Select(tile => tile.ToData()).ToList();
+    data.tiles = GetAllTiles(tile => tile.Type != TileType.Space).Select(tile => tile.ToData()).ToList();
     data.items = _items.Select(item => item.ToData()).ToList();
     data.jobs = _jobs.Select(job => job.ToData()).ToList();
     data.characters = _characters.Select(character => character.ToData()).ToList();
@@ -396,7 +396,7 @@ public class World
     //  reload tile information
     foreach (var tile in data.tiles)
     {
-      world._tiles[tile.x, tile.y].Type = Tile.TileType.Floor;      
+      world._tiles[tile.x, tile.y].Type = tile.type;
     }
 
     //  load items
@@ -462,7 +462,7 @@ public class World
 
       var tile = tiles[0];
       //  can
-      return tile.Type == Tile.TileType.Floor &&  //  a wall must be build on a floor tile
+      return tile.Type == TileType.Floor &&  //  a wall must be build on a floor tile
              tile.IsOccupied == false &&          //  must not be occupied
              tile.ActiveJob == null;              //  no job active
     });
@@ -487,7 +487,7 @@ public class World
 
       var tile = tiles[0];
 
-      if (tile.Type != Tile.TileType.Floor || tile.IsOccupied || tile.ActiveJob != null)
+      if (tile.Type != TileType.Floor || tile.IsOccupied || tile.ActiveJob != null)
         return false;
 
       //  door must have wall to north & south, or east & west
@@ -524,7 +524,7 @@ public class World
       }
 
       return tiles.All(tile =>
-        tile.Type == Tile.TileType.Floor &&  //  a wall must be build on a floor tile
+        tile.Type == TileType.Floor &&  //  a wall must be build on a floor tile
         tile.IsOccupied == false &&          //  must not be occupied
         tile.ActiveJob == null);
     });

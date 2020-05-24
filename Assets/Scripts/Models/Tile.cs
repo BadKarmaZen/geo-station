@@ -29,24 +29,25 @@ public class UpdateItemEvent : ItemEvent { }
 
 #endregion
 
+#region const, enum ...
+
+/// <summary>
+/// We can swith between space and floor
+/// Space: outer furniture: solar panel, satelite, antenna ...
+/// Floos: part of the space station: wall, door, computer, bed, ...
+/// </summary>
+public enum TileType { Space, Floor, Docking };
+
+#endregion
+
 public class Tile
 {
-  #region const, enum ...
 
-  /// <summary>
-  /// We can swith between space and floor
-  /// Space: outer furniture: solar panel, satelite, antenna ...
-  /// Floos: part of the space station: wall, door, computer, bed, ...
-  /// </summary>
-  public enum TileType { Space, Floor };
-
-
-  #endregion
 
   #region Properties
 
   public Position Position { get; set; }
-  
+
   //  a tile can only be in 1 room
   public Room Room { get; set; }
 
@@ -123,6 +124,7 @@ public class Tile
   {
     return new TileData
     {
+      type = Type,
       x = Position.x,
       y = Position.y,
       job_id = ActiveJob?.Id ?? 0
@@ -135,6 +137,7 @@ public class Tile
 [Serializable]
 public class TileData
 {
+  public TileType type;
   public int x;
   public int y;
 

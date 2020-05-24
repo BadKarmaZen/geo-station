@@ -26,7 +26,7 @@ public class WorldController : MonoBehaviour
 
   World _world;
 
-  static string _loadGameFileName;
+  static string _loadGameFileName = @"d:\[unity]\geo_new_game.txt";
 
   #endregion
 
@@ -111,7 +111,7 @@ public class WorldController : MonoBehaviour
     _world?.Pause();
 
     //  clear the load file name
-    _loadGameFileName = null;
+    _loadGameFileName = @"d:\[unity]\geo_new_game.txt";
 
     //  Reload Scene
     SceneManager.LoadScene(SceneManager.GetActiveScene().name);
@@ -280,8 +280,6 @@ public class WorldController : MonoBehaviour
   #endregion
 
   #region internal Helpers
-
-
 
   #endregion
 }

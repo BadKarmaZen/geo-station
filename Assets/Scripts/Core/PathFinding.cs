@@ -41,7 +41,7 @@ public class PathFinding
         _grid[x, y] = new Node
         {
           Tile = tile,
-          Walkable = tile.Type == Tile.TileType.Floor &&
+          Walkable = tile.Type == TileType.Floor &&
                     (tile.Item == null || tile.Item.MovementCost != 0),
           mCost = tile.Item?.MovementCost ?? 1f    
         };

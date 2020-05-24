@@ -66,11 +66,11 @@ public class BuildController : MonoBehaviour
     }
     else if (_buildAction == BuildAction.Floor)
     {
-      message.Tile.SetType(Tile.TileType.Floor);
+      message.Tile.SetType(TileType.Floor);
     }
     else if (_buildAction == BuildAction.Destruct)
     {
-      message.Tile.SetType(Tile.TileType.Space);
+      message.Tile.SetType(TileType.Space);
     }
     else if (_buildAction == BuildAction.FixedObject)
     {
@@ -122,11 +122,11 @@ public class BuildController : MonoBehaviour
       {
         if (_buildAction == BuildAction.Floor)
         {
-          tile.SetType(Tile.TileType.Floor);
+          tile.SetType(TileType.Floor);
         }
         else if (_buildAction == BuildAction.Destruct)
         {
-          tile.SetType(Tile.TileType.Space);
+          tile.SetType(TileType.Space);
         }
         else if (_buildAction == BuildAction.FixedObject)
         {

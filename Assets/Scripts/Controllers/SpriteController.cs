@@ -297,7 +297,17 @@ public class SpriteController : MonoBehaviour
     {
       SpriteRenderer renderer = graphic.GetComponent<SpriteRenderer>();
 
-      renderer.sprite = _resourceCollection.GetSprite((tile.Type == Tile.TileType.Floor) ? "Tiles_Floor" : "Tiles_Space");
+      var spriteName = "Tiles_Space";
+      if (tile.Type == TileType.Floor)
+      {
+        spriteName = "Tiles_Floor";
+      }
+      else if(tile.Type == TileType.Docking)
+      {
+        spriteName = "Tiles_Docking";
+      }
+
+      renderer.sprite = _resourceCollection.GetSprite(spriteName);
     }
     else
     {
