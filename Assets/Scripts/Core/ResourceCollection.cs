@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class ResourceCollection 
+public class ResourceCollection
 {
   #region Members
 
@@ -11,12 +11,14 @@ public class ResourceCollection
 
   #endregion
 
-  public ResourceCollection(string folder)
+  public ResourceCollection(params string[] folders)
   {
-    _folder = folder;
-    Debug.Log($"Create Resource Collection: {_folder}");
-
-    LoadResources(folder);
+    _folder = string.Join("@", folders);
+    foreach (var folder in folders)
+    {
+      Debug.Log($"Create Resource Collection: {_folder}");
+      LoadResources(folder);
+    }
   }
 
   public Sprite GetSprite(string name)
@@ -31,7 +33,7 @@ public class ResourceCollection
   }
 
   #region Helper
-  
+
   private void LoadResources(string folder)
   {
     var sprites = Resources.LoadAll<Sprite>(folder);

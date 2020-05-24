@@ -449,10 +449,18 @@ public class World
 
     //  wall
     var wallFactory = abstractFactory.CreateItemFactory(new Item(Item.Wall, 0f, true));
-    wallFactory.BuiltTime = 1f;
+    wallFactory.BuildTime = 1f;
     wallFactory.BuildSound = "welding";
-    wallFactory.SetBuildRule((tile, factory) =>
+    wallFactory.SetBuildRule((tiles, factory) =>
     {
+      if (tiles.Count != 1)
+      {
+        Debug.LogError("Walls are single tiles");
+        return false;
+      }
+
+      var tile = tiles[0];
+      //  can
       return tile.Type == Tile.TileType.Floor &&  //  a wall must be build on a floor tile
              tile.IsOccupied == false &&          //  must not be occupied
              tile.ActiveJob == null;              //  no job active
@@ -462,14 +470,22 @@ public class World
     var doorFactory = abstractFactory.CreateItemFactory(doorPrototype, Item.Wall);
 
     doorFactory.BuildSound = "welding";
-    doorFactory.BuiltTime = 0.5f;
+    doorFactory.BuildTime = 0.5f;
     doorPrototype.Parameters["openness"] = 0f;
     doorPrototype.Parameters["is_opening"] = 0f;
     doorPrototype.UpdateActions += ItemActions.DoorUpdateAction;
     doorPrototype.IsEnterable = ItemActions.DoorIsEnterable;
 
-    doorFactory.SetBuildRule((tile, factory) =>
+    doorFactory.SetBuildRule((tiles, factory) =>
     {
+      if (tiles.Count != 1)
+      {
+        Debug.LogError("Doors are single tiles");
+        return false;
+      }
+
+      var tile = tiles[0];
+
       if (tile.Type != Tile.TileType.Floor || tile.IsOccupied || tile.ActiveJob != null)
         return false;
 
@@ -493,6 +509,23 @@ public class World
       }
 
       return false;
+    });
+
+    //  Oxygen generator
+    var o2Factory = abstractFactory.CreateItemFactory(new Item(Item.O2_generator, 0f, false));
+    o2Factory.BuildTime = 1f;
+    o2Factory.SetBuildRule((tiles, factory) =>      
+    {
+      if (tiles.Count != 2)
+      {
+        Debug.LogError("O2_generator are 1x2 tiles");
+        return false;
+      }
+
+      return tiles.All(tile =>
+        tile.Type == Tile.TileType.Floor &&  //  a wall must be build on a floor tile
+        tile.IsOccupied == false &&          //  must not be occupied
+        tile.ActiveJob == null);
     });
   }
 

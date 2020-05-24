@@ -180,6 +180,7 @@ public class WorldController : MonoBehaviour
         if (tile == null) continue;
 
         new CreateTileEvent { Tile = tile }.Publish();
+        new UpdateTileEvent { Tile = tile }.Publish();
       }
     }
 

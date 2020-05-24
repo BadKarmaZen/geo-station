@@ -5,10 +5,33 @@ using UnityEditorInternal;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
-public class MouseUpdateEvent : Event
+#region Events
+
+public class MouseEvent : Event
 {
   public Tile Tile { get; set; }
-}  
+}
+
+public class MouseUpdateEvent : MouseEvent
+{
+}
+
+public class MouseClickEvent : MouseEvent
+{
+}
+
+public class MouseWheelEvent : MouseEvent
+{
+  public bool Up { get; set; }
+}
+
+public class MouseDragEvent : MouseEvent
+{
+  public Tile To { get; set; }
+  public bool Complete { get; set; }
+}
+
+#endregion
 
 public class MouseController : MonoBehaviour
 {
@@ -63,8 +86,15 @@ public class MouseController : MonoBehaviour
     var scroll = Input.GetAxis("Mouse ScrollWheel");
     if (scroll != 0)
     {
-      var newSize = Camera.main.orthographicSize - (Camera.main.orthographicSize * scroll);
-      Camera.main.orthographicSize = Mathf.Clamp(newSize, 3f, 50f);
+      if (!Input.GetKey(KeyCode.LeftShift))
+      {
+        var newSize = Camera.main.orthographicSize - (Camera.main.orthographicSize * scroll);
+        Camera.main.orthographicSize = Mathf.Clamp(newSize, 3f, 50f);
+      }
+      else
+      {
+        new MouseWheelEvent { Up = scroll > 0 }.Publish();
+      }
     }
   }
 
@@ -106,13 +136,22 @@ public class MouseController : MonoBehaviour
     if (Input.GetMouseButton(0) && _startDragTile != null)
     {
       var currentTile = GetTileAtWorldCoordinate(GetMousePosition());
-      IoC.Get<EventAggregator>().Publish(new DragEvent { From = _startDragTile, To = currentTile });
+      new MouseDragEvent { Tile = _startDragTile, To = currentTile }.Publish();
     }
 
     if (Input.GetMouseButtonUp(0))
     {
       var currentTile = GetTileAtWorldCoordinate(GetMousePosition());
-      IoC.Get<EventAggregator>().Publish(new DragEvent { From = _startDragTile, To = currentTile, Complete = true });
+
+      if (currentTile == _startDragTile)
+      {
+
+        new MouseClickEvent { Tile = currentTile }.Publish();
+      }
+      else
+      {
+        new MouseDragEvent { Tile = _startDragTile, To = currentTile, Complete = true }.Publish();
+      }
     }
   }
 
@@ -123,7 +162,7 @@ public class MouseController : MonoBehaviour
     return Camera.main.ScreenToWorldPoint(mouse);
   }
 
-  Tile GetTileAtWorldCoordinate(Vector3 coord) => 
+  Tile GetTileAtWorldCoordinate(Vector3 coord) =>
     _worldController.GetTile(new Position(coord.x + 0.5f, coord.y + 0.5f));
 
   #endregion

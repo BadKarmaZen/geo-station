@@ -14,6 +14,7 @@ public class Item
   //	Register item types, so that we don't mis type ;)
   public const string Wall = nameof(Wall);
   public const string Door = nameof(Door);
+  public const string O2_generator = nameof(O2_generator);
 
   #endregion
 
@@ -26,6 +27,8 @@ public class Item
   public string Type { get; protected set; }
 
   public Tile Tile { get; protected set; }
+
+  public float Rotation { get; set; }
 
   //	cost to move over object
   public float MovementCost { get; protected set; }
@@ -57,11 +60,12 @@ public class Item
     Parameters = new Dictionary<string, float>();
   }
 
-  public Item(Item prototype, Tile tile, ItemFactory factory)
+  public Item(Item prototype, Tile tile, ItemFactory factory, float rotation = 0)
   {
     Type = prototype.Type;
     MovementCost = prototype.MovementCost;
     RoomEnclosure = prototype.RoomEnclosure;
+    Rotation = rotation;
 
     Parameters = new Dictionary<string, float>();
 

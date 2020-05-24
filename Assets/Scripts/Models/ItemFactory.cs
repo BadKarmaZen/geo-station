@@ -10,7 +10,7 @@ public class ItemFactory
 {
   #region Members
 
-  private Func<Tile, ItemFactory, bool> _canBuildRule;
+  private Func<List<Tile>, ItemFactory, bool> _canBuildRule;
   private Dictionary<string, List<ItemAction>> _itemStates = new Dictionary<string, List<ItemAction>>();
 
   #endregion
@@ -23,7 +23,7 @@ public class ItemFactory
 
 
   public string BuildSound { get; set; }
-  public float BuiltTime { get; set; }
+  public float BuildTime { get; set; }
 
   #endregion
 
@@ -50,16 +50,16 @@ public class ItemFactory
 
   #region Methods
 
-  public void SetBuildRule(Func<Tile, ItemFactory, bool> rule) 
+  public void SetBuildRule(Func<List<Tile>, ItemFactory, bool> rule) 
     => _canBuildRule = rule;
 
-  public bool CanBuild(Tile tile)
-    => _canBuildRule(tile, this);
+  public bool CanBuild(List<Tile> tiles)
+    => _canBuildRule(tiles, this);
 
   public bool IsValidNeighbour(string type) 
     => AllowedNeighbourTypes.Contains(type);
 
-  public Item CreateItem(Tile tile) => new Item(Protoype, tile, this);
+  public Item CreateItem(Tile tile, float rotation = 0) => new Item(Protoype, tile, this, rotation);
     //=> CanBuild(tile) ? new Item(Protoype, tile, this) : null;
 
   public Item LoadItem(Tile tile) => new Item(Protoype, tile, this);

@@ -47,6 +47,9 @@ TagManager:
   - name: FixedObjects
     uniqueID: 803981197
     locked: 0
+  - name: BuildPreview
+    uniqueID: 3341189007
+    locked: 0
   - name: Character
     uniqueID: 99686293
     locked: 0

@@ -4,18 +4,16 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-public class DragEvent
-{
-  public Tile From { get; set; }
-  public Tile To { get; set; }
-  public bool Complete { get; set; }
-}
 
 /// <summary>
 /// This controller manages the build commands from the user
 /// Controller Launch order : 5
 /// </summary>
-public class BuildController : MonoBehaviour, IHandle<DragEvent>
+public class BuildController : MonoBehaviour
+  , IHandle<MouseUpdateEvent>
+  , IHandle<MouseDragEvent>
+  , IHandle<MouseClickEvent>
+  , IHandle<MouseWheelEvent>
 {
   enum BuildAction
   {
@@ -41,18 +39,72 @@ public class BuildController : MonoBehaviour, IHandle<DragEvent>
   private string _resourceType;
   private string _buildType;
 
-  //List<BuildingResource> _resources = new List<BuildingResource>();
+  private float _rotate = 0;
+
+  ResourceCollection _resouceCollection;
+  GameObject _previewGameObject;
+  GameObject _defaultBuildCursor;
 
   #endregion
 
   #region Events
 
-  public void OnHandle(DragEvent message)
+  public void OnHandle(MouseUpdateEvent message)
+  {
+    //  update location for build preview
+    //
+    _previewGameObject.transform.position = message.Tile.Position.GetVector();
+  }
+
+  public void OnHandle(MouseClickEvent message)
+  {
+    //  single click event
+    //
+    if (_buildAction == BuildAction.Resource)
+    {
+      IoC.Get<WorldController>().CreateResource(_resourceType, message.Tile);
+    }
+    else if (_buildAction == BuildAction.Floor)
+    {
+      message.Tile.SetType(Tile.TileType.Floor);
+    }
+    else if (_buildAction == BuildAction.Destruct)
+    {
+      message.Tile.SetType(Tile.TileType.Space);
+    }
+    else if (_buildAction == BuildAction.FixedObject)
+    {
+      //  can we build here
+      var factory = IoC.Get<AbstractItemFactory>();
+
+      if (factory.IsMultiTile(_buildType))
+      {
+        var buildOnTiles = factory.GetTilesToBuildOn(_buildType, message.Tile, _rotate);
+        
+        if (factory.CanBuildItem(_buildType, buildOnTiles))
+        {
+          IoC.Get<WorldController>().CreateJob(new Job(_buildType, message.Tile, factory.GetBuildTime(_buildType), _rotate));
+        } 
+      }
+      else
+      {
+        if (factory.CanBuildItem(_buildType, message.Tile))
+        {
+          //  Create a job for it
+          IoC.Get<WorldController>().CreateJob(new Job(_buildType, message.Tile, factory.GetBuildTime(_buildType)));
+        }
+      }      
+    }
+
+    _rotate = 0;
+  }
+
+  public void OnHandle(MouseDragEvent message)
   {
     if (message.To != _dragTo)
     {
       //  Update
-      _dragFrom = message.From;
+      _dragFrom = message.Tile;
       _dragTo = message.To;
 
       ClearDragPreview();
@@ -61,14 +113,6 @@ public class BuildController : MonoBehaviour, IHandle<DragEvent>
 
     if (message.Complete)
     {
-      //  TODO - TEST
-      if (message.From == message.To && _buildAction == BuildAction.Resource)
-      {
-        IoC.Get<WorldController>().CreateResource(_resourceType, message.From);
-
-        return;
-      }
-
       ClearDragPreview();
 
       //  TODO - remove test => needs to go to job que
@@ -90,30 +134,40 @@ public class BuildController : MonoBehaviour, IHandle<DragEvent>
           if (IoC.Get<AbstractItemFactory>().CanBuildItem(_buildType, tile))
           {
             //  Create a job for it
-            IoC.Get<WorldController>().CreateJob(new Job(tile, _buildType, IoC.Get<AbstractItemFactory>().GetBuildTime(_buildType)));
+            IoC.Get<WorldController>().CreateJob(new Job(_buildType, tile, IoC.Get<AbstractItemFactory>().GetBuildTime(_buildType)));
           }
-
-          //var item = IoC.Get<ObjectFactory>().CreateItem(_buildType, tile);
-
-          //if (item != null)
-          //{
-          //  //  Create a job for it
-          //  IoC.Get<WorldController>().CreateJob(new Job(tile, item.Type, item.Type == "Door" ? 0.5f : 1f));
-
-          //  //  TODO ? jobcontroller
-          //  //new ItemUpdatedEvent { Item = item }.Publish();
-          //}
         }
-        else
-        {
-
-        }
-
       }
 
       _dragFrom = null;
       _dragTo = null;
     }
+  }
+
+  public void OnHandle(MouseWheelEvent message)
+  {
+    //  rotate element preview
+    if (message.Up)
+    {
+      _rotate += 90;
+    }
+    else
+    {
+      _rotate -= 90;
+    }
+
+    if (_rotate < 0)
+    {
+      _rotate += 360;
+    }
+    else if (_rotate >= 360)
+    {
+      _rotate -= 360;
+    }
+
+    Debug.Log(_rotate);
+
+    UpdatePreviewSprite();
   }
 
   #endregion
@@ -122,14 +176,45 @@ public class BuildController : MonoBehaviour, IHandle<DragEvent>
 
   #region Properties
 
-  public GameObject circleCursorPrefab;
+  //public GameObject circleCursorPrefab;
 
   #endregion
 
   void Awake()
   {
     Debug.Log("BuildController.Awake");
+
+
+    _objectFactory = IoC.Get<GameObjectFactory>();
+
+
     IoC.RegisterInstance(this);
+    _resouceCollection = new ResourceCollection("Objects");
+
+    CreatePrefabs();
+  }
+
+  private void CreatePrefabs()
+  {
+    _defaultBuildCursor = new GameObject();
+    _defaultBuildCursor.name = $"build cursor";
+    _defaultBuildCursor.layer = 5;  // "UI"
+
+    _defaultBuildCursor.transform.position = new Vector3();
+    _defaultBuildCursor.transform.SetParent(this.transform, true);
+    var renderer = _defaultBuildCursor.AddComponent<SpriteRenderer>();
+    renderer.sprite = _resouceCollection.GetSprite("build");
+    renderer.sortingLayerName = "BuildPreview";
+
+
+    _previewGameObject = new GameObject();
+    _previewGameObject.name = "build preview";
+    _previewGameObject.layer = 5;  // "UI"
+
+    _previewGameObject.transform.position = new Vector3();
+    _previewGameObject.transform.SetParent(this.transform, true);
+    renderer = _previewGameObject.AddComponent<SpriteRenderer>();
+    renderer.sortingLayerName = "BuildPreview";
   }
 
   public void OnEnable()
@@ -143,7 +228,9 @@ public class BuildController : MonoBehaviour, IHandle<DragEvent>
   {
     Debug.Log("BuildController.Start");
 
-    _objectFactory = IoC.Get<GameObjectFactory>();
+
+
+    //_previewGameObject.
   }
 
   // Update is called once per frame
@@ -168,6 +255,8 @@ public class BuildController : MonoBehaviour, IHandle<DragEvent>
   {
     _buildAction = BuildAction.FixedObject;
     _buildType = type;
+
+    UpdatePreviewSprite();
   }
 
   //  TODO - remove pathfinding
@@ -184,6 +273,17 @@ public class BuildController : MonoBehaviour, IHandle<DragEvent>
 
   #region Helpers
 
+  private void UpdatePreviewSprite()
+  {
+    //  update preview
+    if (_buildType == Item.O2_generator)
+    {
+      var spritename = $"{_buildType}_{_rotate}";
+      _previewGameObject.GetComponent<SpriteRenderer>().sprite = _resouceCollection.GetSprite(spritename);
+    }
+  }
+
+
   private void ShowDragPreview()
   {
     if (_dragTo != null)
@@ -191,7 +291,8 @@ public class BuildController : MonoBehaviour, IHandle<DragEvent>
       foreach (var position in Position.GetPositions(_dragFrom?.Position, _dragTo?.Position))
       //GetPostitions(_dragFrom, _dragTo))
       {
-        var prev = _objectFactory.Spawn(circleCursorPrefab, new Vector3(position.x, position.y), Quaternion.identity);
+        //  TODO
+        var prev = _objectFactory.Spawn(_defaultBuildCursor, new Vector3(position.x, position.y), Quaternion.identity);
         //	set parent in hier. view
         prev.transform.SetParent(this.transform, true);
         _dragPreview.Add(prev);
@@ -208,6 +309,8 @@ public class BuildController : MonoBehaviour, IHandle<DragEvent>
 
     _dragPreview.Clear();
   }
+
+
 
   //private IEnumerable<Position> GetPostitions(Tile from, Tile to)
   //{

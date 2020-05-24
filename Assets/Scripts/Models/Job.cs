@@ -23,6 +23,7 @@ public class Job
   public bool Busy { get; set; }
 
   public float BuildTime { get; set; }
+  public float Rotation { get; set; }
 
   //public int Retry { get; internal set; }
   // public BuildingResource ResourcePile { get; internal set; }
@@ -35,12 +36,13 @@ public class Job
 
   #region Construction
 
-  public Job(Tile tile, string type, float buildTime)
+  public Job(string type, Tile tile, float buildTime, float rotation = 0)
   {
     Tile = tile;
     Item = type;
     BuildTime = buildTime;
     Tile.ActiveJob = this;
+    Rotation = rotation;
   }
 
   #endregion
@@ -66,8 +68,9 @@ public class Job
       Busy = false;
 
       //  create iteme
-      var item = IoC.Get<AbstractItemFactory>().CreateItem(Item, Tile);
+      var item = IoC.Get<AbstractItemFactory>().CreateItem(Item, Tile, Rotation);
       Tile.InstallItem(item);
+
 
       return true;
     }
@@ -93,6 +96,7 @@ public class Job
     BuildTime = data.buildtime;
     Item = data.type;
     Busy = data.busy;
+    Rotation = data.rotation;
   }
 
   public JobData ToData() =>
@@ -104,7 +108,8 @@ public class Job
       buildtime = BuildTime,
       //type = Item.Type,
       type = Item,
-      busy = Busy
+      busy = Busy,
+      rotation = Rotation
     };
 
   internal void FinishJob() => new JobUpdateEvent { Job = this }.Publish();
@@ -121,4 +126,5 @@ public class JobData
   public string type;
   public float buildtime;
   public bool busy;
+  public float rotation;
 }

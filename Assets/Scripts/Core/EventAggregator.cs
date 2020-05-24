@@ -54,7 +54,7 @@ public class EventAggregator
     }
     else
     {
-      Debug.LogWarning("No instance subcribed to this event type");
+      Debug.LogWarning($"No instance subcribed to event {typeof(T)}");
     }
   }
 }

@@ -214,14 +214,12 @@ public class SpriteController : MonoBehaviour
 
   #region Properties
 
-  public Sprite floorSprite;
-
   #endregion
 
   public void Awake()
   {
     Debug.Log($"SpriteController.Awake");
-    _resourceCollection = new ResourceCollection("Objects");
+    _resourceCollection = new ResourceCollection("Tiles", "Objects");
   }
 
   public void OnEnable()
@@ -279,7 +277,7 @@ public class SpriteController : MonoBehaviour
 
   private void CreateTile(Tile tile)
   {
-    if(_tileGraphics.ContainsKey(tile.Position))
+    if (_tileGraphics.ContainsKey(tile.Position))
     {
       Debug.LogError($"*** Tile {tile.Position} already created ***");
       return;
@@ -299,7 +297,7 @@ public class SpriteController : MonoBehaviour
     {
       SpriteRenderer renderer = graphic.GetComponent<SpriteRenderer>();
 
-      renderer.sprite = (tile.Type == Tile.TileType.Floor) ? floorSprite : null;
+      renderer.sprite = _resourceCollection.GetSprite((tile.Type == Tile.TileType.Floor) ? "Tiles_Floor" : "Tiles_Space");
     }
     else
     {
@@ -346,7 +344,7 @@ public class SpriteController : MonoBehaviour
     renderer.sprite = _resourceCollection.GetSprite(spriteName);
     renderer.sortingLayerName = "FixedObjects";
 
-    if(notify)
+    if (notify)
       NotifyNeighbours(item);
   }
 
@@ -367,30 +365,32 @@ public class SpriteController : MonoBehaviour
 
   private string BuildItemSpriteName(Item item)
   {
-    var spriteName = item.Type + "_";
-    var factory = IoC.Get<AbstractItemFactory>().GetItemFactory(item);
+    var spriteName = IoC.Get<AbstractItemFactory>().GetSpriteName(item);
 
-    var neighbours = IoC.Get<WorldController>().GetNeighbourTiles(item.Tile, tile => factory.IsValidNeighbour(tile.Item?.Type));
+    //spriteName = item.Type + "_";
+    //var factory = IoC.Get<AbstractItemFactory>().GetItemFactory(item);
 
-    foreach (var neighbour in neighbours)
-    {
-      if (neighbour.Position.IsNorthOf(item.Tile.Position))
-      {
-        spriteName += "N";
-      }
-      if (neighbour.Position.IsEastOf(item.Tile.Position))
-      {
-        spriteName += "E";
-      }
-      if (neighbour.Position.IsSouthOf(item.Tile.Position))
-      {
-        spriteName += "S";
-      }
-      if (neighbour.Position.IsWestOf(item.Tile.Position))
-      {
-        spriteName += "W";
-      }
-    }
+    //var neighbours = IoC.Get<WorldController>().GetNeighbourTiles(item.Tile, tile => factory.IsValidNeighbour(tile.Item?.Type));
+
+    //foreach (var neighbour in neighbours)
+    //{
+    //  if (neighbour.Position.IsNorthOf(item.Tile.Position))
+    //  {
+    //    spriteName += "N";
+    //  }
+    //  if (neighbour.Position.IsEastOf(item.Tile.Position))
+    //  {
+    //    spriteName += "E";
+    //  }
+    //  if (neighbour.Position.IsSouthOf(item.Tile.Position))
+    //  {
+    //    spriteName += "S";
+    //  }
+    //  if (neighbour.Position.IsWestOf(item.Tile.Position))
+    //  {
+    //    spriteName += "W";
+    //  }
+    //}
 
     return spriteName;
   }
