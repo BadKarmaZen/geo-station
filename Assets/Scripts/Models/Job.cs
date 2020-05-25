@@ -10,20 +10,37 @@ public class JobUpdateEvent : Event
   //public Character Worker { get; set; }
 }
 
+public enum JobType
+{
+  Construction, //  Build something on tile
+  Delivery,     //  Move delivery from a to b
+}
+
 public class Job
 {
+  #region Identification
+
+  private static long NextJobId = 1;
+  public static void Initialize(long nextJobId) => NextJobId = nextJobId;
+  public long Id { get; set; }
+
+  #endregion
+
   #region Properties
 
-  public long Id { get; set; }
+  public JobType Type { get; set; }
 
   public Tile Tile { get; set; }
 
   public string Item { get; set; }
+  public object Tag { get; set; }
 
   public bool Busy { get; set; }
 
   public float BuildTime { get; set; }
   public float Rotation { get; set; }
+  public bool ResourceNotAvailable { get; internal set; }
+  public BuildingResource Delivery { get; private set; }
 
   //public int Retry { get; internal set; }
   // public BuildingResource ResourcePile { get; internal set; }
@@ -36,13 +53,34 @@ public class Job
 
   #region Construction
 
-  public Job(string type, Tile tile, float buildTime, float rotation = 0)
+  public static Job CreateConstructionJob(string constructionType, Tile tile, float buildTime, float rotation = 0)
+  {
+    var job = new Job(tile)
+    {
+      Id = NextJobId++,
+      Type = JobType.Construction,
+      Item = constructionType,
+      BuildTime = buildTime,
+      Rotation = rotation,
+    };
+
+    return job;
+  }
+
+  public static Job CreateDeliveryJob(BuildingResource resource, Tile from, Tile to)
+  {
+    return new Job(to)
+    {
+      Type = JobType.Delivery,
+      Tag = from,
+      Delivery = resource
+    };
+  }
+
+  protected Job(Tile tile)
   {
     Tile = tile;
-    Item = type;
-    BuildTime = buildTime;
     Tile.ActiveJob = this;
-    Rotation = rotation;
   }
 
   #endregion
@@ -97,6 +135,11 @@ public class Job
     Item = data.type;
     Busy = data.busy;
     Rotation = data.rotation;
+
+    if (Id >= NextJobId)
+    {
+      Initialize(Id + 1);
+    }
   }
 
   public JobData ToData() =>

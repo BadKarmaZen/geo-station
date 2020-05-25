@@ -4,6 +4,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System.Security.Cryptography;
+using UnityEngine.Monetization;
 
 #region Events
 
@@ -119,16 +120,27 @@ public class Character
 
       return;
     }
+    else if (CurrentJob.Type == JobType.Construction)
+    {
+      UpdateConstructionJob(deltaTime);
+    }
+    else if (CurrentJob.Type == JobType.Delivery)
+    {
+      UpdateDeliveryJob(deltaTime);
+    }
+  }
 
+  private void UpdateConstructionJob(float deltaTime)
+  {
     /*  
-     *  We have a job
-     *  1. find resource pile
-     *  2. reserve resource from pile
-     *  3. start going to pile
-     *  4. at resource pile: Take resource
-     *  5. start going to job
-     *  6. at job location: do work
-     *  */
+         *  We have a job
+         *  1. find resource pile
+         *  2. reserve resource from pile
+         *  3. start going to pile
+         *  4. at resource pile: Take resource
+         *  5. start going to job
+         *  6. at job location: do work
+         *  */
 
     if (HasResource)
     {
@@ -181,9 +193,9 @@ public class Character
       {
         Debug.Log($"we do not have a resource yet: find resources");
 
-        //  find resources
-        //SelectedResourcePile = World.SelectResourcePile(CurrentJob.Item.Type);
-        SelectedResourcePile = World.SelectResourcePile(CurrentJob.Item);
+        //  find resources        
+        //SelectedResourcePile = World.SelectResourcePile(CurrentJob.Item);
+        SelectedResourcePile = IoC.Get<World>().GetInventory().SelectBuildingResource(CurrentJob.Item);
         if (SelectedResourcePile != null)
         {
           SelectedResourcePile.Reserve();
@@ -213,6 +225,53 @@ public class Character
     }
   }
 
+  private void UpdateDeliveryJob(float deltaTime)
+  {
+    if (!HasResource)
+    {
+      if (DestinationTile == null)
+      {
+        var docking = (Tile)CurrentJob.Tag;
+        Debug.Log($"No resource => go to docking {docking.Position}");
+        //  go pick up resource
+        SetDestination(docking);
+      }
+
+      if (CurrentTile == DestinationTile)
+      {
+        Debug.Log($"at docking {CurrentTile.Position}");
+        //  TODO : improve - generic
+        IoC.Get<ShipmentController>().PickUpResource(CurrentJob.Delivery);
+        HasResource = true;
+        DestinationTile = null;
+      }
+    }
+    else
+    {
+      if (DestinationTile == null)
+      {
+        Debug.Log($"goto delivery {CurrentJob.Tile.Position}");
+        //  go pick up resource
+        SetDestination(CurrentJob.Tile);
+      }
+
+      if (CurrentTile == DestinationTile)
+      {
+        Debug.Log($"at delivery {CurrentTile.Position}");
+        //  Current job is done,
+        //  place resource on tile
+        //
+
+        //  todo
+
+        new BuildingResourceUpdatedEvent { Resource = CurrentJob.Delivery }.Publish();
+
+        CurrentJob = null;
+        DestinationTile = null;
+      }
+    }
+  }
+
   private void UpdateMovement(float deltaTime)
   {
     if (CurrentTile != DestinationTile)
@@ -237,28 +296,6 @@ public class Character
       DestinationTile = null;
 
 
-      //if (CurrentJob == null)
-      //{
-      //  Debug.Log("Job = null");
-      //}
-      //else if (CurrentJob.ResourcePile == null)
-      //{
-      //  Debug.Log("ResourcePile = null");
-      //}
-
-      //if (DestinationTile == CurrentJob.ResourcePile.Tile)
-      //{
-      //  CurrentJob.ResourcePile.TakeResource();
-      //  if (!SetDestination(CurrentJob.Tile))
-      //  {
-      //    //  TODO - cannot complete job
-      //  }
-
-      //}
-      //else
-      //{
-      //  DestinationTile = null;
-      //}
     }
 
     //  Enter behaviour
@@ -272,32 +309,6 @@ public class Character
       //  wait until we can enter the tile
       return;
     }
-
-    //if (NextTile?.Item?.Type == Item.Door)
-    //{
-    //  if (NextTile.Item.CurrentState == "Closed")
-    //  {
-    //    Debug.Log("Character at closed door");
-    //    if (CurrentJob != null)
-    //    {
-    //      NextTile.Item.SetAction("OpenDoor");
-    //    }
-    //    else
-    //    {
-    //      //  no job, no need to open door
-    //      DestinationTile = null;
-    //      NextTile = null;
-    //      return;
-    //    }        
-    //  }
-
-    //  if (NextTile.Item.CurrentState != "Opened")
-    //  {
-    //    //  we need to wait
-    //    return;
-    //  }
-    //}
-
 
     if (NextTile != null)
     {
@@ -337,15 +348,16 @@ public class Character
 
   public bool SetDestination(Tile tile)
   {
-    if (tile.Type == TileType.Floor)
+    if (tile.Type != TileType.Space)
     {
       //  Need to find path to
       var pathfinder = new PathFinding();
       _path = pathfinder.FindPath(CurrentTile, tile);
 
       if (_path != null)
-      {
+      {        
         DestinationTile = tile;
+        Debug.Log($"Character on {CurrentTile.Position} moving to {DestinationTile.Position}");
       }
     }
 

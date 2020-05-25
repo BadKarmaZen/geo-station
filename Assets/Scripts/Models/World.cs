@@ -25,7 +25,6 @@ public class World
   #region Properties
 
   public bool IsPaused { get; private set; }
-  public Inventory Inventory { get; internal set; } = new Inventory();
 
   public Room GetOutside() => _rooms[0];
 
@@ -95,7 +94,7 @@ public class World
     if (oldType == TileType.Delivery)
     {
       //  We lost a place to put our deliveries
-      _deliveryTiles.Remove(tile);      
+      _deliveryTiles.Remove(tile);
     }
     else if (newType == TileType.Delivery)
     {
@@ -220,11 +219,11 @@ public class World
     _rooms.Add(room);
   }
 
-  internal BuildingResource CreateBuildingResource(string resource)
-  {
-    return new BuildingResource(resource, null, 20);
-    //  TODO need to add this to the save game
-  }
+  //internal BuildingResource CreateBuildingResource(string resource)
+  //{
+  //  return new BuildingResource(resource, null, 20);
+  //  //  TODO need to add this to the save game
+  //}
 
   public void RemoveRoom(Room room)
   {
@@ -244,12 +243,10 @@ public class World
 
   #region Jobs
 
-  private long _nextJobId = 1;
   private List<Job> _jobs = new List<Job>();
 
-  public void AddJob(Job job)
+  public void ScheduleJob(Job job)
   {
-    job.Id = _nextJobId++;
     _jobs.Add(job);
   }
 
@@ -274,58 +271,63 @@ public class World
     return _buildingResources.AsEnumerable();
   }
 
+  public Inventory _inventory = new Inventory();
+  internal Inventory GetInventory() => _inventory;
+
   public void CancelJob(Job job)
   {
     //  TODO
     //  _jobs.Remove(job);
   }
 
+
   public void UpdateJobs(float deltaTime)
   {
     //  remove all completed jobs from queue
-    _jobs.RemoveAll(job => job.IsCompleted());
+    //_jobs.RemoveAll(job => job.IsCompleted());
 
-    var jobTodo = _jobs.FirstOrDefault(job => !job.Busy);
-    if (jobTodo != null)
-    {
-      //  work to to
-      //  TODO improve how to find worker
-      var freeWorker = _characters.FirstOrDefault(worker => worker.CurrentJob == null);
+    //var jobTodo = _jobs.FirstOrDefault(job => !job.Busy);
+    //if (jobTodo != null)
+    //{
+    //  //  work to to
+    //  //  TODO improve how to find worker
+    //  var freeWorker = _characters.FirstOrDefault(worker => worker.CurrentJob == null);
 
-      if (freeWorker != null)
-      {
-        freeWorker.AssignJob(jobTodo);
-      }
-    }
+    //  if (freeWorker != null)
+    //  {
+    //    freeWorker.AssignJob(jobTodo);
+    //  }
+    //}
   }
 
   #endregion
 
   #region Building resources
 
-  private long _nextBuildingId = 1;
+
   private List<BuildingResource> _buildingResources = new List<BuildingResource>();
 
-  public BuildingResource CreateBuildingResource(Tile tile, string type)
-  {
-    tile.ResourcePile = new BuildingResource(type, tile, amount: 5)
-    {
-      Id = _nextBuildingId++,
-      World = this
-    };
+  //public BuildingResource CreateBuildingResource(Tile tile, string type)
+  //{
+  //  //tile.ResourcePile = new BuildingResource(type, tile, amount: 5)
+  //  //{
+  //  //  Id = _nextBuildingId++,
+  //  //  World = this
+  //  //};
 
-    _buildingResources.Add(tile.ResourcePile);
-    return tile.ResourcePile;
-  }
+  //  //_buildingResources.Add(tile.ResourcePile);
+  //  //return tile.ResourcePile;
+  //}
 
-  internal BuildingResource SelectResourcePile(string type)
-    => _buildingResources?.FirstOrDefault(resource => resource.Type == type && resource.CanTakeResource());
+  //internal BuildingResource SelectResourcePile(string type)
+  //  => _buildingResources?.FirstOrDefault(resource => resource.Type == type && resource.CanTakeResource());
 
-  public void RemoveBuildingResource(BuildingResource resource)
-  {
-    resource.Tile.ResourcePile = null;
-    _buildingResources.Remove(resource);
-  }
+  //  TODO
+  //public void RemoveBuildingResource(BuildingResource resource)
+  //{
+  //  resource.Tile.ResourcePile = null;
+  //  _buildingResources.Remove(resource);
+  //}
 
   public void UpdateBuildingResources(float deltaTime)
   {
@@ -431,16 +433,11 @@ public class World
       var worldItem = IoC.Get<AbstractItemFactory>().LoadItem(item.type, world.GetTile(item.x, item.y), item.rotation);
       world._items.Add(worldItem);
     }
-    
+
     //  create jobs
     foreach (var job in data.jobs)
     {
       world._jobs.Add(new Job(job, world));
-    }
-
-    if (world._jobs.Count > 0)
-    {
-      world._nextJobId = world._jobs.Max(j => j.Id) + 1;
     }
 
     //  create resource
@@ -448,12 +445,6 @@ public class World
     {
       var resource = new BuildingResource(buildingResource, world);
       world._buildingResources.Add(resource);
-
-      if (world._nextBuildingId <= resource.Id)
-      {
-        //  update resource Id;
-        world._nextBuildingId = resource.Id + 1;
-      }
     }
 
     //  create characters
@@ -541,7 +532,7 @@ public class World
     //  Oxygen generator
     var o2Factory = abstractFactory.CreateItemFactory(new Item(Item.O2_generator, 0f, false));
     o2Factory.BuildTime = 1f;
-    o2Factory.SetBuildRule((tiles, factory) =>      
+    o2Factory.SetBuildRule((tiles, factory) =>
     {
       if (tiles.Count != 2)
       {

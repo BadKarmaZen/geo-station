@@ -8,14 +8,6 @@ using System.IO;
 using Unity.Collections;
 using UnityEngine.UIElements;
 
-//public class WorldUpdateEvent : Event
-//{
-//  public bool Reset { get; set; }
-//  public bool Paused { get; set; }
-//  public bool UnPaused { get; set; }
-//}
-
-
 /// <summary>
 /// This is the wolrd controller, important changes to the world are managed by this controller
 /// This controller is launched first: lauch order = 1
@@ -64,6 +56,10 @@ public class WorldController : MonoBehaviour
     {
       NewGame();
     }
+
+    //  register the world for all controllers
+    //
+    IoC.RegisterInstance(_world);
   }
 
   private void LoadUiElements()
@@ -95,7 +91,7 @@ public class WorldController : MonoBehaviour
 
   internal Inventory GetInventory()
   {
-    return _world.Inventory;
+    return _world._inventory;
   }
 
   // Update is called once per frame
@@ -167,10 +163,10 @@ public class WorldController : MonoBehaviour
   //  new BuildingResourceUpdatedEvent { Resource = resource }.Publish();
   //}
 
-  public BuildingResource RequestShipment(string resource)
-  {
-    return _world.CreateBuildingResource(resource);
-  }
+  //public BuildingResource RequestShipment(string resource)
+  //{
+  //  return _world.CreateBuildingResource(resource);
+  //}
 
   public void NewGame()
   {
@@ -248,15 +244,15 @@ public class WorldController : MonoBehaviour
     File.WriteAllText(@"d:\[unity]\geo.txt", json);
   }
 
-  internal void CreateJob(Job job)
-  {
-    _world.AddJob(job);
+  //internal void CreateJob(Job job)
+  //{
+  //  _world.AddJob(job);
 
-    //  get resources
-    IoC.Get<ShipmentController>().RequestResources(job.Item);
+  //  //  get resources
+  //  IoC.Get<ShipmentController>().RequestResources(job.Item);
 
-    new JobUpdateEvent { Job = job }.Publish();
-  }
+  //  new JobUpdateEvent { Job = job }.Publish();
+  //}
 
 
   #endregion

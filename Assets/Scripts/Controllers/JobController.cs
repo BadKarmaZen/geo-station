@@ -99,29 +99,28 @@ public class JobController : MonoBehaviour
   // Update is called once per frame
   void Update()
   {
-    //  Start Job if needed
-    //StartJob();
+    //  anything todo
+    //
+    var freeWorkers = IoC.Get<World>().GetCharacters(character => character.CurrentJob == null).ToList();
 
-    //if (_activeWorkers.Count != 0)
-    //{
-    //  foreach (var worker in _activeWorkers)
-    //  {
-    //    worker.Update(Time.deltaTime);
-    //  }
-    //}
+    if (freeWorkers.Count != 0)
+    {
+      var deliveryJobs = IoC.Get<World>().GetJobs().Where(job => job.Type == JobType.Delivery && job.Busy == false).Take(freeWorkers.Count).ToList();
+      while (deliveryJobs.Count > 0)
+      {
+        freeWorkers[0].AssignJob(deliveryJobs[0]);
+        deliveryJobs.RemoveAt(0);
+        freeWorkers.RemoveAt(0);
+      }
 
-    //UpdateWorkForce();
-
-    //if (_currentJob != null)
-    //{
-    //  if (_currentJob.ProcessJob(Time.deltaTime))
-    //  {
-    //    //  Job is done
-    //    _currentJob.Tile.InstallFixedObject(_currentJob.FixedObject);
-    //    _currentJob.Tile.JobScheduled = false;
-    //    _currentJob = null;
-    //  }
-    //}
+      var constructionJobs = IoC.Get<World>().GetJobs().Where(job => job.Type == JobType.Construction && job.Busy == false && job.ResourceNotAvailable == false).Take(freeWorkers.Count).ToList();
+      while (constructionJobs.Count > 0)
+      {
+        freeWorkers[0].AssignJob(constructionJobs[0]);
+        constructionJobs.RemoveAt(0);
+        freeWorkers.RemoveAt(0);
+      }
+    }
   }
 
   #endregion
@@ -175,48 +174,6 @@ public class JobController : MonoBehaviour
   private string GetSpriteName(Job job)
   {
     return IoC.Get<AbstractItemFactory>().GetSpriteName(job);
-    ////var spriteName = job.Item.Type + "_";
-    //var spriteName = job.Item + "_";
-
-    ////  TODO improve
-    ////if (job.Item.Type == Item.Door)
-    //if (job.Item == Item.Door)
-    //{
-    //  var factory = IoC.Get<AbstractItemFactory>().GetItemFactory(job.Item);
-
-    //  //  check surrounding tiles
-    //  var neighbours = IoC.Get<WorldController>().GetNeighbourTiles(job.Tile, tile => factory.IsValidNeighbour(tile.Item?.Type));
-    //  //from t in IoC.Get<World>().GetNeighbourTiles(job.Tile)
-    //  //               where 
-    //  //               select t;
-
-    //  foreach (var neighbour in neighbours)
-    //  {
-    //    if (neighbour.Position.IsNorthOf(job.Tile.Position))
-    //    {
-    //      spriteName += "N";
-    //    }
-    //    if (neighbour.Position.IsEastOf(job.Tile.Position))
-    //    {
-    //      spriteName += "E";
-    //    }
-    //    if (neighbour.Position.IsSouthOf(job.Tile.Position))
-    //    {
-    //      spriteName += "S";
-    //    }
-    //    if (neighbour.Position.IsWestOf(job.Tile.Position))
-    //    {
-    //      spriteName += "W";
-    //    }
-    //  }
-
-    //  return spriteName;
-
-    //}
-    //else
-    //{
-    //  return spriteName;
-    //}
   }
 
   private void RemoveGraphics(Job job)
@@ -229,65 +186,37 @@ public class JobController : MonoBehaviour
     }
   }
 
-  //void StartJob()
-  //{
-  //  if (_scheduledJob.Count > 0 && _freeWorkers.Count > 0)
-  //  {
-  //    //  TODO find worker (nearest to job, resource ...)
+  //  Schedules a single one-tile job
+  //
+  public void ScheduleJob(string itemType, Tile tile)
+  {
+    var factory = IoC.Get<AbstractItemFactory>();
+    var job = Job.CreateConstructionJob(itemType, tile, factory.GetBuildTime(itemType));
 
-  //    for (int workId = 0; workId < _freeWorkers.Count; workId++)
-  //    {
-  //      if (_freeWorkers[workId].AssignJob(_scheduledJob[0]))
-  //      {
-  //        //  success
-  //        var worker = _freeWorkers[workId];
-  //        _freeWorkers.Remove(worker);
-  //        _activeWorkers.Add(worker);
+    var inventory = IoC.Get<World>().GetInventory();
+    
+    if (inventory.GetAvailableAmount(itemType) == 0)
+    {
+      //  we do not have enough resource, order shipment
+      IoC.Get<World>().GetInventory().OrderResourceShipment(itemType);
 
-  //        _scheduledJob.RemoveAt(0);
+      job.ResourceNotAvailable = true;
+    }
 
-  //        return;
-  //      }
-  //    }
+    //  we have enough resources for this job, or its on back order
+    //  reserve the resources
+    inventory.ReserveResourceForSystem(itemType);
 
-  //    //  none of the free workers could do the job
-  //    //  remove and add to back
-  //    Debug.LogWarning("none of the free workers could do the job");
-  //    var job = _scheduledJob[0];
-  //    //job.Retry++;
+    //  Add the job to the module
+    //
+    IoC.Get<World>().ScheduleJob(job);
+  }
 
-  //    if (_activeWorkers.Count > 0/* job.Retry < 3*/)
-  //    {
-  //      //  Still workers busy
-  //      _scheduledJob.Add(job);
-  //    }
-  //    else
-  //    {
-  //      //  TODO
-  //      //  job is delete
-  //      //  
-  //      //job.Tile.CannotCompleteJob(job.FixedObject);
-  //    }
-  //    _scheduledJob.RemoveAt(0);
-  //  }
-  //}
-
-  //public void AddWorker(Character worker)
-  //{
-  //  _freeWorkers.Add(worker);
-  //}
-
-
-  //void UpdateWorkForce()
-  //{
-  //  if (updateWorkForce)
-  //  {
-  //    updateWorkForce = false;
-
-  //    _freeWorkers.AddRange(_activeWorkers.FindAll(w => w.CurrentJob == null));
-  //    _activeWorkers.RemoveAll(w => w.CurrentJob == null);
-  //  }
-  //}
+  public void ScheduleDelivery(BuildingResource resource, Tile from, Tile to)
+  {
+    var delivery = Job.CreateDeliveryJob(resource, from, to);
+    IoC.Get<World>().ScheduleJob(delivery);
+  }
 
   #endregion
 

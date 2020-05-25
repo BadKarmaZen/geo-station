@@ -11,14 +11,24 @@ public class BuildingResourceUpdatedEvent : Event
 
 public class BuildingResource
 {
+  private static long NextResourceId = 1;
+  public static void Initialize(long nextResourceId) => NextResourceId = nextResourceId;
+
   #region Properties
 
-  public long Id { get; set; }
+  public long Id { get; private set; }
   public string Type { get; set; }
 
+  //  Amount available in the resource pile
   public int Amount { get; set; }
-  public int AmountReserved { get; set; }
-  public int AmountLeft => Amount - AmountReserved;
+
+  //  amount requested and reserved by job controller
+  public int ReservedBySystem { get; set; }
+
+  //  Amount Reserved by a worker
+  public int ReservedByWorker { get; set; }
+
+  //public int AmountLeft => Amount - Reserved;
 
   public Tile Tile { get; set; }
   public World World { get; internal set; }
@@ -29,9 +39,10 @@ public class BuildingResource
 
   public BuildingResource(string type, Tile tile, int amount)
   {
+    Id = NextResourceId++;
     Type = type;
     Amount = amount;
-    AmountReserved = 0;
+    ReservedByWorker = 0;
     Tile = tile;
   }
 
@@ -41,27 +52,35 @@ public class BuildingResource
 
   public bool CanTakeResource()
   {
-    Debug.Log($"BuildingResource.CanTakeResource: {AmountLeft} => {Amount} - {AmountReserved}");
-    return AmountLeft > 0;
+    Debug.Log($"BuildingResource.CanTakeResource: {Amount}, {ReservedBySystem}, {ReservedByWorker}");
+    return Amount - ReservedByWorker > 0;
   }
 
   public void Reserve()
   {
-    Debug.Log($"BuildingResource.Reserve: {AmountLeft} => {Amount} - {AmountReserved}");
-    AmountReserved++;
+    Debug.Log($"BuildingResource.Reserve: {Amount}, {ReservedBySystem}, {ReservedByWorker}");
+    ReservedByWorker++;
+  }
+
+  public void ReserveBySystem()
+  {
+    Debug.Log($"BuildingResource.ReserveBySystem: {Amount}, {ReservedBySystem}, {ReservedByWorker}");
+    ReservedBySystem++;
   }
 
   internal void TakeResource()
   {
     Amount--;
-    AmountReserved--;
+    ReservedByWorker--;
 
-    Debug.Log($"BuildingResource.TakeResource: {AmountLeft} => {Amount} - {AmountReserved}");
+    Debug.Log($"BuildingResource.TakeResource: {Amount} => {Amount} - {ReservedByWorker}");
 
     if (Amount == 0)
     {
-      World.RemoveBuildingResource(this);
-      new BuildingResourceUpdatedEvent { Resource = this }.Publish();
+      //  TODO something
+     // IoC.Get<World>().GetInventory().TakeReser
+      //World.RemoveBuildingResource(this);
+      //new BuildingResourceUpdatedEvent { Resource = this }.Publish();
     }
   }
 
@@ -77,7 +96,12 @@ public class BuildingResource
     Tile.ResourcePile = this;
     World = world;
     Amount = data.amount;
-    AmountReserved = data.amount_reserved;
+    ReservedByWorker = data.amount_reserved;
+
+    if (Id >= NextResourceId)
+    {
+      Initialize(Id + 1);
+    }
   }
 
   public BuildingResourceData ToData() => new BuildingResourceData
@@ -87,7 +111,7 @@ public class BuildingResource
     x = Tile.Position.x,
     y = Tile.Position.y,
     amount = Amount,
-    amount_reserved = AmountReserved
+    amount_reserved = ReservedByWorker
   };
 
   #endregion

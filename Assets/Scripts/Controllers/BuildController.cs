@@ -203,12 +203,9 @@ public class BuildController : MonoBehaviour
   void Awake()
   {
     Debug.Log("BuildController.Awake");
-
-
-    _objectFactory = IoC.Get<GameObjectFactory>();
-
-
     IoC.RegisterInstance(this);
+
+    _objectFactory = IoC.Get<GameObjectFactory>();    
     _resouceCollection = new ResourceCollection("Objects");
 
     CreatePrefabs();
@@ -240,17 +237,13 @@ public class BuildController : MonoBehaviour
   public void OnEnable()
   {
     Debug.Log("BuildController.OnEnable");
-    IoC.Get<EventAggregator>().Subscribe(this);
   }
 
   // Start is called before the first frame update
   void Start()
   {
     Debug.Log("BuildController.Start");
-
-
-
-    //_previewGameObject.
+    IoC.Get<EventAggregator>().Subscribe(this);
   }
 
   // Update is called once per frame
@@ -332,16 +325,20 @@ public class BuildController : MonoBehaviour
         var buildOnTiles = factory.GetTilesToBuildOn(_buildType, tile, _rotate);
 
         if (factory.CanBuildItem(_buildType, buildOnTiles))
-        {
-          IoC.Get<WorldController>().CreateJob(new Job(_buildType, tile, factory.GetBuildTime(_buildType), _rotate));
+        { 
+          //  TODO: FIX jobs
+          //IoC.Get<WorldController>().CreateJob(new Job(_buildType, tile, factory.GetBuildTime(_buildType), _rotate));
         }
       }
       else
       {
         if (factory.CanBuildItem(_buildType, tile))
         {
+          //  TODO: FIX jobs
+          IoC.Get<JobController>().ScheduleJob(_buildType, tile);
+
           //  Create a job for it
-          IoC.Get<WorldController>().CreateJob(new Job(_buildType, tile, factory.GetBuildTime(_buildType)));
+          //IoC.Get<WorldController>().CreateJob(new Job(_buildType, tile, factory.GetBuildTime(_buildType)));
         }
       }
     }

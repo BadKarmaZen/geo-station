@@ -1,12 +1,17 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
+using TMPro;
 using UnityEngine;
 
 public class Inventory
 {
   #region Members
 
-  Dictionary<string, int> _resourceInventory = new Dictionary<string, int>();
+  private long _nextBuildingId = 1;
+  private List<BuildingResource> _resourceInventory = new List<BuildingResource>();
+  private List<BuildingResource> _orderedResources = new List<BuildingResource>();
 
   #endregion
 
@@ -14,25 +19,37 @@ public class Inventory
 
   public int GetAvailableAmount(string resource)
   {
-    if (!_resourceInventory.ContainsKey(resource))
-    {
-      _resourceInventory.Add(resource, 0);
-    }
+    var available = _resourceInventory.Where(r => r.Type == resource).Sum(r => r.Amount - r.ReservedBySystem);
+    var ordered = _orderedResources.Where(r => r.Type == resource).Sum(r => r.Amount - r.ReservedBySystem);
 
-    return _resourceInventory[resource];
+    return available;
   }
 
-  public void AddToInventory(string resource, int amount)
+  public void AddOrderResources(string resource, int amount)
   {
-    if (!_resourceInventory.ContainsKey(resource))
-    {
-      _resourceInventory.Add(resource, amount);
-    }
-    else
-    {
-      _resourceInventory[resource] += amount;
-    }
+    //  TODO
+  }
 
+  public void ReserveResourceForSystem(string resource, int amount = 1)
+  {
+    var resourcePile = _resourceInventory.FirstOrDefault(r => r.Type == resource && (r.Amount - r.ReservedByWorker) > 0);
+    if (resourcePile == null)
+      resourcePile = _orderedResources.FirstOrDefault(r => r.Type == resource && (r.Amount - r.ReservedByWorker) > 0);
+
+    resourcePile?.ReserveBySystem();
+  }
+
+  public BuildingResource SelectBuildingResource(string resource)
+  {
+    return _resourceInventory.FirstOrDefault(r => r.Type == resource && (r.Amount - r.ReservedByWorker) != 0);
+  }
+
+  internal void OrderResourceShipment(string resourceType)
+  {
+    var order = new BuildingResource(resourceType, null, 20);
+    _orderedResources.Add(order);
+
+    IoC.Get<ShipmentController>().OrderResourceShipment(order);
   }
 
   #endregion
