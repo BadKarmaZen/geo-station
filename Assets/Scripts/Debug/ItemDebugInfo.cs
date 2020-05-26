@@ -39,6 +39,12 @@ public class ItemDebugInfo : MonoBehaviour
     if (_tile == null)
       return;
 
+    var resource = _tile.ResourcePile;
+    if(resource != null)
+    {
+      _text.text = $"Resource : {resource.Type} ({resource.Amount}, {resource.ReservedByWorker} [{resource.ReservedBySystem}])";
+    }
+
     if (!_tile.IsOccupied)
     {
       _text.text = $"not occupied";
@@ -49,10 +55,6 @@ public class ItemDebugInfo : MonoBehaviour
     if (_tile.Item != null)
     {
       _text.text = $"Item : {_tile.Item.Type}";
-    }
-    else
-    {
-      _text.text = $"Resource : {_tile.ResourcePile.Type} ({_tile.ResourcePile.Amount})";
     }
   }
 }

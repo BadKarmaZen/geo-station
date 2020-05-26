@@ -79,7 +79,7 @@ public class WorldController : MonoBehaviour
     //  create jobs
     foreach (var job in _world.GetJobs())
     {
-      new JobUpdateEvent { Job = job }.Publish();
+      IoC.Get<JobController>().LoadJob(job);
     }
 
     //  create resources

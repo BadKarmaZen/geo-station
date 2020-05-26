@@ -40,6 +40,8 @@ public class ShipmentController : MonoBehaviour
   public Queue<BuildingResource> _currentShipment = new Queue<BuildingResource>();
   public List<BuildingResource> _waitingOnPickup = new List<BuildingResource>();
 
+  public List<GameObject> Deliveries = new List<GameObject>();
+
   #endregion
 
   #region Unity
@@ -53,6 +55,11 @@ public class ShipmentController : MonoBehaviour
   void Start()
   {
     rocket.transform.position = new Vector3(start_position_x, start_position_y);
+
+    foreach (var delivery in Deliveries)
+    {
+      delivery.SetActive(false);
+    }
   }
 
   // Update is called once per frame
@@ -90,8 +97,9 @@ public class ShipmentController : MonoBehaviour
   }
 
   public void PickUpResource(BuildingResource resource)
-  {
+  {        
     _waitingOnPickup.Remove(resource);
+    Deliveries[_waitingOnPickup.Count].SetActive(false);
   }
 
   #endregion
@@ -114,7 +122,8 @@ public class ShipmentController : MonoBehaviour
     }
     else
     {
-      Debug.Log("All deliveries planned");
+      Debug.Log("All deliveries planned"); 
+      _shipmentTimer = 2;  //  reset
       _currentState = State.WaitingForPickup;
     }
   }
@@ -199,6 +208,11 @@ public class ShipmentController : MonoBehaviour
         _movementCompletePercentage = 0;
         _currentState = State.Docking;
         _dockedTile = IoC.Get<World>().GetTile(51, 50);
+
+        foreach (var delivery in Deliveries.Take(_currentShipment.Count))
+        {
+          delivery.SetActive(true);
+        } 
       }
     }
   }

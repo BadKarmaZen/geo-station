@@ -3374,6 +3374,10 @@ MonoBehaviour:
   movementSpeed: 2
   _movementCompletePercentage: 0
   _shipmentTimer: 10
+  Deliveries:
+  - {fileID: 68064072}
+  - {fileID: 1291070911}
+  - {fileID: 618393921}
 --- !u!1 &1519816665
 GameObject:
   m_ObjectHideFlags: 0

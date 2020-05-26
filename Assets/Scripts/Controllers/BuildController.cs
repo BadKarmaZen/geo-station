@@ -61,48 +61,6 @@ public class BuildController : MonoBehaviour
   {
     DoBuild(message.Tile);
     _rotate = 0;
-
-    ////  single click event
-    ////
-    //if (_buildAction == BuildAction.Resource)
-    //{
-    //  IoC.Get<WorldController>().CreateResource(_resourceType, message.Tile);
-    //}
-    //else if (_buildAction == BuildAction.Floor)
-    //{
-    //  message.Tile.SetType(TileType.Floor);
-    //}
-    //else if (_buildAction == BuildAction.Delivery)
-    //{
-    //  message.Tile.SetType(TileType.Delivery);
-    //}
-    //else if (_buildAction == BuildAction.Destruct)
-    //{
-    //  message.Tile.SetType(TileType.Space);
-    //}
-    //else if (_buildAction == BuildAction.FixedObject)
-    //{
-    //  //  can we build here
-    //  var factory = IoC.Get<AbstractItemFactory>();
-
-    //  if (factory.IsMultiTile(_buildType))
-    //  {
-    //    var buildOnTiles = factory.GetTilesToBuildOn(_buildType, message.Tile, _rotate);
-
-    //    if (factory.CanBuildItem(_buildType, buildOnTiles))
-    //    {
-    //      IoC.Get<WorldController>().CreateJob(new Job(_buildType, message.Tile, factory.GetBuildTime(_buildType), _rotate));
-    //    } 
-    //  }
-    //  else
-    //  {
-    //    if (factory.CanBuildItem(_buildType, message.Tile))
-    //    {
-    //      //  Create a job for it
-    //      IoC.Get<WorldController>().CreateJob(new Job(_buildType, message.Tile, factory.GetBuildTime(_buildType)));
-    //    }
-    //  }      
-    //}
   }
 
   public void OnHandle(MouseDragEvent message)
@@ -132,35 +90,6 @@ public class BuildController : MonoBehaviour
 
       _dragFrom = null;
       _dragTo = null;
-      ////  TODO - remove test => needs to go to job que
-      //var worldController = IoC.Get<WorldController>();
-      //var tiles = worldController.GetTiles(_dragFrom, _dragTo);
-
-      //foreach (var tile in tiles)
-      //{
-      //  if (_buildAction == BuildAction.Floor)
-      //  {
-      //    tile.SetType(TileType.Floor);
-      //  }
-      //  else if (_buildAction == BuildAction.Delivery)
-      //  {
-      //    message.Tile.SetType(TileType.Delivery);
-      //  }
-      //  else if (_buildAction == BuildAction.Destruct)
-      //  {
-      //    tile.SetType(TileType.Space);
-      //  }
-      //  else if (_buildAction == BuildAction.FixedObject)
-      //  {
-      //    //  can we build here
-      //    if (IoC.Get<AbstractItemFactory>().CanBuildItem(_buildType, tile))
-      //    {
-      //      //  Create a job for it
-      //      IoC.Get<WorldController>().CreateJob(new Job(_buildType, tile, IoC.Get<AbstractItemFactory>().GetBuildTime(_buildType)));
-      //    }
-      //  }
-      //}
-
     }
   }
 
@@ -325,8 +254,9 @@ public class BuildController : MonoBehaviour
         var buildOnTiles = factory.GetTilesToBuildOn(_buildType, tile, _rotate);
 
         if (factory.CanBuildItem(_buildType, buildOnTiles))
-        { 
+        {
           //  TODO: FIX jobs
+          IoC.Get<JobController>().ScheduleJob(_buildType, tile, _rotate);
           //IoC.Get<WorldController>().CreateJob(new Job(_buildType, tile, factory.GetBuildTime(_buildType), _rotate));
         }
       }
@@ -334,11 +264,7 @@ public class BuildController : MonoBehaviour
       {
         if (factory.CanBuildItem(_buildType, tile))
         {
-          //  TODO: FIX jobs
           IoC.Get<JobController>().ScheduleJob(_buildType, tile);
-
-          //  Create a job for it
-          //IoC.Get<WorldController>().CreateJob(new Job(_buildType, tile, factory.GetBuildTime(_buildType)));
         }
       }
     }
@@ -347,7 +273,7 @@ public class BuildController : MonoBehaviour
   private void UpdatePreviewSprite()
   {
     //  update preview
-    if (_buildType == Item.O2_generator)
+    //if (_buildType == Item.O2_generator)
     {
       var spritename = $"{_buildType}_{_rotate}";
       _previewGameObject.GetComponent<SpriteRenderer>().sprite = _resouceCollection.GetSprite(spritename);

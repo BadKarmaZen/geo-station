@@ -4,11 +4,11 @@ using System.Collections.Generic;
 using System.Data;
 using UnityEngine;
 
-public class JobUpdateEvent : Event
-{
-  public Job Job { get; set; }
-  //public Character Worker { get; set; }
-}
+//public class JobUpdateEvent : Event
+//{
+//  public Job Job { get; set; }
+//  //public Character Worker { get; set; }
+//}
 
 public enum JobType
 {
@@ -155,7 +155,11 @@ public class Job
       rotation = Rotation
     };
 
-  internal void FinishJob() => new JobUpdateEvent { Job = this }.Publish();
+  //internal void FinishJob()
+  //{
+
+  //  new JobUpdateEvent { Job = this }.Publish();
+  //}
 
   #endregion
 }

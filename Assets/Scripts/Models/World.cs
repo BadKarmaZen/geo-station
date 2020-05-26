@@ -280,6 +280,16 @@ public class World
     //  _jobs.Remove(job);
   }
 
+  public void RemoveCompletedJob(Job job)
+  {
+    if (!job.IsCompleted())
+    {
+      Debug.LogError("Job is not yet completed");
+      return;
+    }
+    _jobs.Remove(job);
+  }
+
 
   public void UpdateJobs(float deltaTime)
   {

@@ -10,7 +10,7 @@ using UnityEngine;
 /// </summary>
 public class JobController : MonoBehaviour
   //, IHandle<WorldUpdateEvent>
-  , IHandle<JobUpdateEvent>
+ // , IHandle<JobUpdateEvent>
 {
   #region Members
 
@@ -44,31 +44,31 @@ public class JobController : MonoBehaviour
   //    _jobGraphics = new Dictionary<Job, GameObject>();
   //  }
   //}
-  public void OnHandle(JobUpdateEvent message)
-  {
-    if (message.Job.IsCompleted())
-    {
-      RemoveGraphics(message.Job);
-    }
-    else
-    {
-      CreateGraphics(message.Job);
-    }
-    //// updateWorkForce = true;
-    // ////  free worker
-    // //_activeWorkers.Remove(message.Worker);
-    // //_freeWorkers.Add(message.Worker);
+  //public void OnHandle(JobUpdateEvent message)
+  //{
+  //  if (message.Job.IsCompleted())
+  //  {
+  //    RemoveGraphics(message.Job);
+  //  }
+  //  else
+  //  {
+  //    CreateGraphics(message.Job);
+  //  }
+  //  //// updateWorkForce = true;
+  //  // ////  free worker
+  //  // //_activeWorkers.Remove(message.Worker);
+  //  // //_freeWorkers.Add(message.Worker);
 
-    // //  finish job
-    // var job = message.Job;
+  //  // //  finish job
+  //  // var job = message.Job;
 
-    // //  TODO - replace
-    // //job.Tile.InstallFixedObject(job.FixedObject);
-    // job.Tile.InstallItemOnTile(job.Item);
-    // //job.Tile.JobScheduled = false;
+  //  // //  TODO - replace
+  //  // //job.Tile.InstallFixedObject(job.FixedObject);
+  //  // job.Tile.InstallItemOnTile(job.Item);
+  //  // //job.Tile.JobScheduled = false;
 
-    // RemoveGraphics(job);
-  }
+  //  // RemoveGraphics(job);
+  //}
 
   #endregion
 
@@ -83,11 +83,17 @@ public class JobController : MonoBehaviour
     _resourceCollection = new ResourceCollection("Jobs");
   }
 
+  internal void LoadJob(Job job)
+  {
+    //  just create game object
+    CreateGraphics(job);
+  }
+
   public void OnEnable()
   {
     Debug.Log("JobController.OnEnable");
 
-    IoC.Get<EventAggregator>().Subscribe(this);
+    //IoC.Get<EventAggregator>().Subscribe(this);
   }
 
   // Start is called before the first frame update
@@ -112,8 +118,15 @@ public class JobController : MonoBehaviour
         deliveryJobs.RemoveAt(0);
         freeWorkers.RemoveAt(0);
       }
+      var inventory = IoC.Get<World>().GetInventory();
 
-      var constructionJobs = IoC.Get<World>().GetJobs().Where(job => job.Type == JobType.Construction && job.Busy == false && job.ResourceNotAvailable == false).Take(freeWorkers.Count).ToList();
+      var constructionJobs = IoC.Get<World>().GetJobs()
+        .Where(job => job.Type == JobType.Construction &&
+                      job.Busy == false &&
+                      //job.ResourceNotAvailable == false
+                      inventory.GetAvailableAmountForWorkers(job.Item) > 0)
+        .Take(freeWorkers.Count).ToList();
+
       while (constructionJobs.Count > 0)
       {
         freeWorkers[0].AssignJob(constructionJobs[0]);
@@ -188,34 +201,48 @@ public class JobController : MonoBehaviour
 
   //  Schedules a single one-tile job
   //
-  public void ScheduleJob(string itemType, Tile tile)
+  public void ScheduleJob(string itemType, Tile tile, float rotation = 0)
   {
     var factory = IoC.Get<AbstractItemFactory>();
-    var job = Job.CreateConstructionJob(itemType, tile, factory.GetBuildTime(itemType));
+    var job = Job.CreateConstructionJob(itemType, tile, factory.GetBuildTime(itemType), rotation);
 
     var inventory = IoC.Get<World>().GetInventory();
-    
-    if (inventory.GetAvailableAmount(itemType) == 0)
+
+    //  Try to reserve the resource for the job
+    //    
+    if (inventory.TryReserveAvailableResource(itemType) == false)
     {
-      //  we do not have enough resource, order shipment
-      IoC.Get<World>().GetInventory().OrderResourceShipment(itemType);
+      //  we do not have enough resource at the base
+      // 
 
-      job.ResourceNotAvailable = true;
+      if (inventory.TryReserveOrderedResource(itemType) == false)
+      {
+        //  no resources in the back log. order some new resources
+        //
+        inventory.OrderResourceShipment(itemType);
+      }
     }
-
-    //  we have enough resources for this job, or its on back order
-    //  reserve the resources
-    inventory.ReserveResourceForSystem(itemType);
 
     //  Add the job to the module
     //
     IoC.Get<World>().ScheduleJob(job);
+
+    CreateGraphics(job);
   }
 
   public void ScheduleDelivery(BuildingResource resource, Tile from, Tile to)
   {
     var delivery = Job.CreateDeliveryJob(resource, from, to);
     IoC.Get<World>().ScheduleJob(delivery);
+  }
+
+  internal void JobIsFinished(Job job)
+  {
+    IoC.Get<World>().RemoveCompletedJob(job);
+    
+    RemoveGraphics(job);
+
+    //new JobUpdateEvent { Job = job }.Publish();
   }
 
   #endregion
