@@ -121,8 +121,11 @@ public class CharacterController : MonoBehaviour
   // Update is called once per frame
   void Update()
   {
+    foreach (var character in IoC.Get<World>().GetCharacters())
+    {
+      character.Update(Time.deltaTime);
+    }
   }
-
 
   #endregion
 

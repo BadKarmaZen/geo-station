@@ -8,7 +8,7 @@ using UnityEngine;
 /// This controller is resposible for the main world ui, showing tiles, items, ...
 /// Controller Launch order : 2
 /// </summary>
-public class SpriteController : MonoBehaviour
+public class SpriteController : BaseController
   //, IHandle<WorldUpdateEvent>
   , IHandle<CreateTileEvent>
   , IHandle<UpdateTileEvent>
@@ -154,7 +154,7 @@ public class SpriteController : MonoBehaviour
 
   public void OnHandle(BuildingResourceUpdatedEvent message)
   {
-    Debug.Log($"SpriteController.OnHandle_BuildingResourceUpdatedEvent = {message.Resource.Id} => {message.Resource.Amount}");
+    Log($"SpriteController.OnHandle_BuildingResourceUpdatedEvent = {message.Resource.Id} => {message.Resource.Amount}");
 
     if (!_resourceGraphics.ContainsKey(message.Resource))
     {
@@ -174,7 +174,7 @@ public class SpriteController : MonoBehaviour
       // is depleted
       if (message.Resource.Amount == 0)
       {
-        Debug.Log($"SpriteController.OnHandle_BuildingResourceUpdatedEvent => destroy");
+        Log($"SpriteController.OnHandle_BuildingResourceUpdatedEvent => destroy");
         Destroy(_resourceGraphics[message.Resource]);
       }
     }
@@ -187,7 +187,7 @@ public class SpriteController : MonoBehaviour
 
   //public void CreateWorldGame(World world)
   //{
-  //  Debug.Log("CreateWorldGame");
+  //  Log("CreateWorldGame");
 
   //  for (int x = 0; x < world.Size.width; x++)
   //  {
@@ -205,7 +205,7 @@ public class SpriteController : MonoBehaviour
   //    }
   //  }
 
-  //  Debug.Log("CreateWorldGame.Done");
+  //  Log("CreateWorldGame.Done");
   //}
 
   #endregion
@@ -218,13 +218,13 @@ public class SpriteController : MonoBehaviour
 
   public void Awake()
   {
-    Debug.Log($"SpriteController.Awake");
+    Log($"SpriteController.Awake");
     _resourceCollection = new ResourceCollection("Tiles", "Objects");
   }
 
   public void OnEnable()
   {
-    Debug.Log("SpriteController.OnEnable");
+    Log("SpriteController.OnEnable");
 
     //  the controller is active subscribe to events
     IoC.Get<EventAggregator>().Subscribe(this);
@@ -233,7 +233,7 @@ public class SpriteController : MonoBehaviour
   // Start is called before the first frame update
   void Start()
   {
-    //Debug.Log($"SpriteController.Start");
+    //Log($"SpriteController.Start");
   }
 
   // Update is called once per frame
@@ -279,7 +279,7 @@ public class SpriteController : MonoBehaviour
   {
     if (_tileGraphics.ContainsKey(tile.Position))
     {
-      Debug.LogError($"*** Tile {tile.Position} already created ***");
+      LogError($"*** Tile {tile.Position} already created ***");
       return;
     }
 
@@ -315,7 +315,7 @@ public class SpriteController : MonoBehaviour
     }
     else
     {
-      Debug.LogError("Unknown Tile");
+      LogError("Unknown Tile");
     }
   }
 
@@ -323,7 +323,7 @@ public class SpriteController : MonoBehaviour
   {
     if (_itemGraphics.ContainsKey(item))
     {
-      Debug.LogError($"*** Item {item.Type}@{item.Tile.Position} already created ***");
+      LogError($"*** Item {item.Type}@{item.Tile.Position} already created ***");
       return;
     }
 
@@ -372,7 +372,7 @@ public class SpriteController : MonoBehaviour
     }
     else
     {
-      Debug.LogError($"Unknown Item {item.Type} @ {item.Tile.Position}");
+      LogError($"Unknown Item {item.Type} @ {item.Tile.Position}");
     }
 
   }

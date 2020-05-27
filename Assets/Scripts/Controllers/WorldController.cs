@@ -12,7 +12,7 @@ using UnityEngine.UIElements;
 /// This is the wolrd controller, important changes to the world are managed by this controller
 /// This controller is launched first: lauch order = 1
 /// </summary>
-public class WorldController : MonoBehaviour
+public class WorldController : BaseController
 {
   #region Member
 
@@ -26,7 +26,7 @@ public class WorldController : MonoBehaviour
 
   public void Awake()
   {
-    Debug.Log("WorldController.Awake");
+    Log("WorldController.Awake");
 
     //  Initialize the Ioc so that this 'game' - session has all brand new object instances ...
     IoC.Initialize();
@@ -38,14 +38,14 @@ public class WorldController : MonoBehaviour
 
   public void OnEnable()
   {
-    Debug.Log("WorldController.OnEnable");
+    Log("WorldController.OnEnable");
   }
 
   // Start is called before the first frame update
 
   void Start()
   {
-    Debug.Log("WorldController.Start");
+    Log("WorldController.Start");
 
     if (_loadGameFileName != null)
     {
@@ -81,17 +81,6 @@ public class WorldController : MonoBehaviour
     {
       IoC.Get<JobController>().LoadJob(job);
     }
-
-    //  create resources
-    foreach (var resource in _world.GetBuildiongResource())
-    {
-      new BuildingResourceUpdatedEvent { Resource = resource }.Publish();
-    }
-  }
-
-  internal Inventory GetInventory()
-  {
-    return _world._inventory;
   }
 
   // Update is called once per frame
@@ -106,7 +95,7 @@ public class WorldController : MonoBehaviour
 
   public void OnNewGame()
   {
-    Debug.Log("WorldController.Menu.OnNewGame");
+    Log("WorldController.Menu.OnNewGame");
 
     //  pause the current world
     _world?.Pause();
@@ -120,7 +109,7 @@ public class WorldController : MonoBehaviour
 
   public void OnLoadGame()
   {
-    Debug.Log("WorldController.Menu.OnLoadGame");
+    Log("WorldController.Menu.OnLoadGame");
 
     //  pause the current world
     _world?.Pause();
@@ -134,7 +123,7 @@ public class WorldController : MonoBehaviour
 
   public void OnSaveGame()
   {
-    Debug.Log("WorldController.Menu.OnSaveGame");
+    Log("WorldController.Menu.OnSaveGame");
 
     //  pause the current world
     _world?.Pause();
@@ -170,7 +159,7 @@ public class WorldController : MonoBehaviour
 
   public void NewGame()
   {
-    Debug.Log("NewGame");
+    Log("NewGame");
 
     //  Creates a new world
     //
@@ -205,12 +194,12 @@ public class WorldController : MonoBehaviour
 
     _world?.Unpause();
 
-    Debug.Log("CreateWorldGame.Done");
+    Log("CreateWorldGame.Done");
   }
 
   public void LoadGame()
   {
-    Debug.Log("WorldController.LoadGame");
+    Log("WorldController.LoadGame");
 
     var json = File.ReadAllText(_loadGameFileName);
     var saveGame = JsonUtility.FromJson<GameData>(json);
@@ -224,7 +213,7 @@ public class WorldController : MonoBehaviour
     //  set the camera
     Camera.main.transform.position = new Vector3(saveGame.camera_x, saveGame.camera_y, -10);
 
-    Debug.Log("WorldController.LoadGame.Done");
+    Log("WorldController.LoadGame.Done");
 
     _world.Unpause();
   }

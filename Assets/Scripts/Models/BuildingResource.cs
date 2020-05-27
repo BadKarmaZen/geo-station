@@ -9,7 +9,7 @@ public class BuildingResourceUpdatedEvent : Event
   public BuildingResource Resource { get; set; }
 }
 
-public class BuildingResource
+public class BuildingResource : ObjectBase
 {
   #region Identifier
 
@@ -33,19 +33,18 @@ public class BuildingResource
   public int ReservedByWorker { get; set; }
 
   public Tile Tile { get; set; }
-  public Inventory Inventory { get; internal set; }
+  public bool IsDepleted => Amount == 0;
 
   #endregion
 
   #region Construction
-  public BuildingResource(string type, Inventory inventory, int amount)
+  public BuildingResource(string type, int amount)
   {
     Id = NextResourceId++;
     Type = type;
     Amount = amount;
     ReservedByWorker = 0;
     ReservedBySystem = 0;
-    Inventory = inventory;
   }
 
   //public BuildingResource(string type, Tile tile, int amount)
@@ -66,12 +65,12 @@ public class BuildingResource
 
   public void ReserveResourceByWorker()
   {
-    Debug.Log($"BuildingResource.ReserveByWorker: {Amount}, {ReservedByWorker}");
+    Log($"BuildingResource.ReserveByWorker: {Amount}, {ReservedByWorker}");
     ReservedByWorker++;
   }
   public void ReserveResourceBySystem()
   {
-    Debug.Log($"BuildingResource.ReserveBySystem: {Amount}, {ReservedBySystem}");
+    Log($"BuildingResource.ReserveBySystem: {Amount}, {ReservedBySystem}");
     ReservedBySystem++;
   }
 
@@ -79,17 +78,7 @@ public class BuildingResource
   {
     Amount--;
     ReservedByWorker--;
-
-    //Debug.Log($"BuildingResource.TakeResource: {Amount} => {Amount} - {ReservedByWorker}");
-
-    if (Amount == 0)
-    {
-      Inventory.RemoveResource(this);
-      //  TODO something
-      // IoC.Get<World>().GetInventory().TakeReser
-      //World.RemoveBuildingResource(this);
-      //new BuildingResourceUpdatedEvent { Resource = this }.Publish();
-    }
+    ReservedBySystem--;
   }
 
   #endregion

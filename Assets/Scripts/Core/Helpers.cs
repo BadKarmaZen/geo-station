@@ -1,6 +1,54 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using UnityEngine;
+
+public class BaseController : MonoBehaviour
+{
+  public bool enableLogging;
+
+  protected void Log(object message, [CallerMemberName] string method = null)
+  {
+    if (enableLogging)
+    {
+      Debug.Log($"{method}: {message}");
+    }
+  }
+
+  protected void LogError(object message, [CallerMemberName] string method = null)
+  {
+    if (enableLogging)
+    {
+      Debug.LogError($"{method}: {message}");
+    }
+  }
+}
+
+public class ObjectBase
+{
+  #region Debug helper
+
+  protected bool enableLogging = false;
+
+  protected void Log(string message, [CallerMemberName] string method = null)
+  {
+    if (enableLogging)
+    {
+      Debug.Log($"{method}: {message}");
+    }
+  }
+
+  protected void LogError(string message, [CallerMemberName] string method = null)
+  {
+    if (enableLogging)
+    {
+      Debug.LogError($"{method}: {message}");
+    }
+  }
+
+  #endregion
+
+}
 
 public struct Position
 {

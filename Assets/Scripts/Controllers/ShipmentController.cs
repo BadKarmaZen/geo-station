@@ -6,7 +6,7 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using UnityEngine;
 
-public class ShipmentController : MonoBehaviour
+public class ShipmentController : BaseController
 {
   #region const
 
@@ -110,8 +110,8 @@ public class ShipmentController : MonoBehaviour
   {
     if (_currentShipment.Count != 0)
     {
-      var deliveryTile = IoC.Get<World>().GetAllTiles(tile => tile.Type == TileType.Delivery && tile.ActiveJob == null).FirstOrDefault();
-
+      // var deliveryTile = IoC.Get<World>().GetAllTiles(tile => tile.Type == TileType.Delivery && tile.ResourcePile == null).FirstOrDefault();
+      var deliveryTile = IoC.Get<InventoryController>().GetUnoccupiedDeliveryTile();
       if (deliveryTile != null)
       {
         var delivery = _currentShipment.Dequeue();
@@ -122,7 +122,7 @@ public class ShipmentController : MonoBehaviour
     }
     else
     {
-      Debug.Log("All deliveries planned"); 
+      Log("All deliveries planned"); 
       _shipmentTimer = 2;  //  reset
       _currentState = State.WaitingForPickup;
     }
@@ -138,7 +138,7 @@ public class ShipmentController : MonoBehaviour
       {
         _shipmentTimer = 2;  //  reset
 
-        Debug.Log("All resources are picked up");
+        Log("All resources are picked up");
         _currentState = State.UnDocking;
 
         //  TODO path finding issue
@@ -160,7 +160,7 @@ public class ShipmentController : MonoBehaviour
 
     if (_movementCompletePercentage <= 0)
     {
-      Debug.Log("Undocking Finished");
+      Log("Undocking Finished");
 
       _shipmentTimer = 10;
       _currentState = State.OnEarth;
@@ -179,7 +179,7 @@ public class ShipmentController : MonoBehaviour
 
     if (_movementCompletePercentage >= 1)
     {
-      Debug.Log("Docking Finished");
+      Log("Docking Finished");
       _currentState = State.Docked;
 
       //  TODO path finding issue
@@ -204,7 +204,7 @@ public class ShipmentController : MonoBehaviour
 
       if (_currentShipment.Count != 0)
       {
-        Debug.Log("Something to ship: Start Docking");
+        Log("Something to ship: Start Docking");
         _movementCompletePercentage = 0;
         _currentState = State.Docking;
         _dockedTile = IoC.Get<World>().GetTile(51, 50);

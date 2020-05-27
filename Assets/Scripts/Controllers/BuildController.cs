@@ -2,14 +2,17 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using UnityEngine;
+
+
 
 
 /// <summary>
 /// This controller manages the build commands from the user
 /// Controller Launch order : 5
 /// </summary>
-public class BuildController : MonoBehaviour
+public class BuildController : BaseController
   , IHandle<MouseUpdateEvent>
   , IHandle<MouseDragEvent>
   , IHandle<MouseClickEvent>
@@ -114,7 +117,7 @@ public class BuildController : MonoBehaviour
       _rotate -= 360;
     }
 
-    Debug.Log(_rotate);
+    Log(_rotate);
 
     UpdatePreviewSprite();
   }
@@ -171,7 +174,7 @@ public class BuildController : MonoBehaviour
   // Start is called before the first frame update
   void Start()
   {
-    Debug.Log("BuildController.Start");
+    Log("BuildController.Start");
     IoC.Get<EventAggregator>().Subscribe(this);
   }
 

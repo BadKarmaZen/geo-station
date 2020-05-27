@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.Security.Cryptography;
 using UnityEngine.Monetization;
+using System.Runtime.CompilerServices;
 
 #region Events
 
@@ -43,7 +44,8 @@ public enum CharacterState
   Constructing,
 }
 
-public class Character
+
+public class Character : ObjectBase
 {
   #region Members
 
@@ -123,7 +125,7 @@ public class Character
     if (newState != CharacterState.WanderAround &&
         newState != CharacterState.Idle)
     {
-      Debug.Log($"Set state from {_currentState} to {newState}");
+      Log($"Set state from {_currentState} to {newState}");
     }
 
     _currentState = newState;
@@ -152,13 +154,13 @@ public class Character
       case CharacterState.GotoPickUpTile:
         if (CurrentTile == (Tile)CurrentJob.Tag)
         {
-          Debug.Log("we are at pickup location");
+          Log("we are at pickup location");
           SetState(CharacterState.TakeDelivery);
         }
         else
           if (DestinationTile == null)
         {
-          Debug.Log("get path to pickup location");
+          Log("get path to pickup location");
           SetDestination(CurrentJob.Tag as Tile);
         }
         break;
@@ -174,7 +176,7 @@ public class Character
         }
         else
         {
-          Debug.LogError("not at the pick up place");
+          LogError("not at the pick up place");
           DestinationTile = null;
           SetState(CharacterState.GotoPickUpTile);
         }
@@ -184,7 +186,7 @@ public class Character
       case CharacterState.GotoDeliveryTile:
         if (CurrentTile == CurrentJob.Tile)
         {
-          Debug.Log("at delivery");
+          Log("at delivery");
           SetState(CharacterState.DropDelivery);
         }
         else if (DestinationTile == null)
@@ -196,7 +198,7 @@ public class Character
 
       case CharacterState.DropDelivery:
 
-        Debug.Log("DropDelivery");
+        Log("DropDelivery");
         IoC.Get<World>().GetInventory().AddOrderResourceToInventory(CurrentJob.Delivery);
 
         CurrentJob.Tile.ResourcePile = CurrentJob.Delivery;
@@ -208,17 +210,14 @@ public class Character
         break;
 
       case CharacterState.SelectResourcePile:
-        //  TODO select rreouce
-        SelectedResourcePile = IoC.Get<World>().GetInventory().SelectBuildingResource(CurrentJob.Item);
+
+        SelectedResourcePile = IoC.Get<InventoryController>().ReserveResourcePile(CurrentJob.Item);
+        
         if (SelectedResourcePile != null)
         {
-          SelectedResourcePile.ReserveResourceByWorker();
           SetState(CharacterState.GotoResourcePile);
         }
-        else
-        {
-          Debug.LogError("No resource pile for job");
-        }
+
         break;
 
       case CharacterState.GotoResourcePile:
@@ -230,12 +229,12 @@ public class Character
         //else
         if (CurrentTile == SelectedResourcePile.Tile)
         {
-          Debug.Log("we are at resource location");
+          Log("we are at resource location");
           SetState(CharacterState.TakeResource);
         }
         else if (DestinationTile == null)
         {
-          Debug.Log("Need to get resource");
+          Log("Need to get resource");
           SetDestination(SelectedResourcePile.Tile);
         }
 
@@ -243,14 +242,13 @@ public class Character
       case CharacterState.TakeResource:
         if (CurrentTile != SelectedResourcePile.Tile)
         {
-          Debug.LogError("We are not at the resource pile");
+          LogError("We are not at the resource pile");
           DestinationTile = null;
           SetState(CharacterState.GotoResourcePile);
         }
         else
         {
-          SelectedResourcePile.TakeResource();
-          //HasResource = true;
+          IoC.Get<InventoryController>().TakeResource(SelectedResourcePile);
 
           SetState(CharacterState.GotoJobTile);
           DestinationTile = null;
@@ -301,14 +299,14 @@ public class Character
   {
     if (DestinationTile != null)
     {
-      Debug.LogError("MoveIdle. already have destination");
+      LogError("MoveIdle. already have destination");
       return;
     }
 
     var tiles = World.GetNeighbourTiles(CurrentTile).Where(tile => tile.Type == TileType.Floor || tile.Type == TileType.Delivery).ToList();
     if (tiles.Count == 0)
     {
-      Debug.LogError("MoveIdle. I'm at location hwer i cannot move anywhere");
+      LogError("MoveIdle. I'm at location hwer i cannot move anywhere");
       return;
     }
 
@@ -317,174 +315,6 @@ public class Character
 
     SetState(CharacterState.WanderAround);
   }
-
-  //private void UpdateTask(float deltaTime)
-  //{
-  //  //  if nothing to do, move idle
-  //  if (CurrentJob == null)
-  //  {
-  //    if (DestinationTile == null)
-  //    {
-  //      MoveIdle();
-  //    }
-
-  //    return;
-  //  }
-  //  else if (CurrentJob.Type == JobType.Construction)
-  //  {
-  //    UpdateConstructionJob(deltaTime);
-  //  }
-  //  else if (CurrentJob.Type == JobType.Delivery)
-  //  {
-  //    UpdateDeliveryJob(deltaTime);
-  //  }
-  //}
-
-  //private void UpdateConstructionJob(float deltaTime)
-  //{
-  //  /*  
-  //       *  We have a job
-  //       *  1. find resource pile
-  //       *  2. reserve resource from pile
-  //       *  3. start going to pile
-  //       *  4. at resource pile: Take resource
-  //       *  5. start going to job
-  //       *  6. at job location: do work
-  //       *  */
-
-  //  if (HasResource)
-  //  {
-  //    //  we have a resource, what now?
-
-  //    //  at job location
-  //    if (CurrentTile == CurrentJob.Tile)
-  //    {
-  //      if (CurrentJob.ProcessJob(deltaTime))
-  //      {
-  //        HasResource = false;
-  //        CurrentJob.FinishJob();
-  //        CurrentJob = null;
-  //      }
-
-  //      //  animate handes
-  //      _handMovement += 0.03f;
-  //      if (_handMovement > 1.0f)
-  //      {
-  //        _handMovement = 0f;
-  //      }
-
-  //      new CharacterUpdatedEvent { Character = this, Hand = true }.Publish();
-
-  //      return;
-  //    }
-
-  //    if (DestinationTile == null)
-  //    {
-  //      Debug.Log($"we have resource, and are not at job location");
-
-  //      //  we have resource, and are not at job location
-  //      //
-  //      SetDestination(CurrentJob.Tile);
-
-  //      if (DestinationTile == null)
-  //      {
-  //        Debug.LogError("CANNOT reach job help");
-  //      }
-  //      return;
-  //    }
-
-  //    //  on our way to our job
-  //    return;
-  //  }
-  //  else
-  //  {
-  //    //  we do not have a resource yet
-  //    if (SelectedResourcePile == null)
-  //    {
-  //      Debug.Log($"we do not have a resource yet: find resources");
-
-  //      //  find resources        
-  //      //SelectedResourcePile = World.SelectResourcePile(CurrentJob.Item);
-  //      SelectedResourcePile = IoC.Get<World>().GetInventory().SelectBuildingResource(CurrentJob.Item);
-  //      if (SelectedResourcePile != null)
-  //      {
-  //        SelectedResourcePile.Reserve();
-  //      }
-
-  //      return;
-  //    }
-
-  //    //  we are at the resource pile
-  //    if (CurrentTile == SelectedResourcePile.Tile)
-  //    {
-  //      Debug.Log($"we are at the resource pile");
-
-  //      SelectedResourcePile.TakeResource();
-  //      HasResource = true;
-  //      SelectedResourcePile = null;
-
-  //      return;
-  //    }
-
-  //    if (DestinationTile == null)
-  //    {
-  //      Debug.Log($"we do not have a resource yet: we have found resources, set destination");
-
-  //      SetDestination(SelectedResourcePile.Tile);
-  //    }
-  //  }
-  //}
-
-  //private void UpdateDeliveryJob(float deltaTime)
-  //{
-  //  if (!HasResource)
-  //  {
-  //    var docking = (Tile)CurrentJob.Tag;
-
-  //    //if (CurrentTile != docking &&)
-  //    if (DestinationTile != docking)
-  //    {
-  //      Debug.Log($"No resource => go to docking {docking.Position}");
-  //      DestinationTile = null;
-  //      //  go pick up resource
-  //      SetDestination(docking);
-  //    }
-
-  //    if (CurrentTile == DestinationTile)
-  //    {
-  //      Debug.Log($"at docking {CurrentTile.Position}");
-  //      //  TODO : improve - generic
-  //      IoC.Get<ShipmentController>().PickUpResource(CurrentJob.Delivery);
-  //      HasResource = true;
-  //      DestinationTile = null;
-  //    }
-  //  }
-  //  else
-  //  {
-  //    if (DestinationTile == null)
-  //    {
-  //      Debug.Log($"goto delivery {CurrentJob.Tile.Position}");
-  //      //  go pick up resource
-  //      SetDestination(CurrentJob.Tile);
-  //    }
-
-  //    if (CurrentTile == DestinationTile)
-  //    {
-  //      Debug.Log($"at delivery {CurrentTile.Position}");
-  //      //  Current job is done,
-  //      //  place resource on tile
-  //      //
-
-  //      //  todo
-  //      IoC.Get<World>().GetInventory().AddOrderResourceToInventory(CurrentJob.Delivery);
-
-  //      new BuildingResourceUpdatedEvent { Resource = CurrentJob.Delivery }.Publish();
-
-  //      CurrentJob = null;
-  //      DestinationTile = null;
-  //    }
-  //  }
-  //}
 
   private void UpdateMovement(float deltaTime)
   {
@@ -548,11 +378,11 @@ public class Character
 
   public void AssignJob(Job job)
   {
-    Debug.Log($"Assign new job");
+    Log($"Assign new job");
 
     if (CurrentJob != null)
     {
-      Debug.LogError($"Already has job");
+      LogError($"Already has job");
       return;
     }
 
@@ -587,7 +417,7 @@ public class Character
         if (_currentState != CharacterState.WanderAround &&
             _currentState != CharacterState.Idle)
         {
-          Debug.Log($"No Path found [{_currentState}] from {CurrentTile.Position} to {tile.Position}");
+          Log($"No Path found [{_currentState}] from {CurrentTile.Position} to {tile.Position}");
         }
       }
     }

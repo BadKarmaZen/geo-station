@@ -8,9 +8,9 @@ using UnityEngine;
 /// This controller manages the jobs
 /// Controller Launch order : 4
 /// </summary>
-public class JobController : MonoBehaviour
-  //, IHandle<WorldUpdateEvent>
- // , IHandle<JobUpdateEvent>
+public class JobController : BaseController
+//, IHandle<WorldUpdateEvent>
+// , IHandle<JobUpdateEvent>
 {
   #region Members
 
@@ -76,7 +76,7 @@ public class JobController : MonoBehaviour
 
   void Awake()
   {
-    Debug.Log("JobController.Awake");
+    Log("JobController.Awake");
 
     IoC.RegisterInstance(this);
 
@@ -91,7 +91,7 @@ public class JobController : MonoBehaviour
 
   public void OnEnable()
   {
-    Debug.Log("JobController.OnEnable");
+    Log("JobController.OnEnable");
 
     //IoC.Get<EventAggregator>().Subscribe(this);
   }
@@ -99,7 +99,7 @@ public class JobController : MonoBehaviour
   // Start is called before the first frame update
   void Start()
   {
-    Debug.Log("JobController.Start");
+    Log("JobController.Start");
   }
 
   // Update is called once per frame
@@ -118,13 +118,14 @@ public class JobController : MonoBehaviour
         deliveryJobs.RemoveAt(0);
         freeWorkers.RemoveAt(0);
       }
-      var inventory = IoC.Get<World>().GetInventory();
+
+
+      //var inventory = IoC.Get<World>().GetInventory();
 
       var constructionJobs = IoC.Get<World>().GetJobs()
         .Where(job => job.Type == JobType.Construction &&
                       job.Busy == false &&
-                      //job.ResourceNotAvailable == false
-                      inventory.GetAvailableAmountForWorkers(job.Item) > 0)
+                      IoC.Get<InventoryController>().HaveEnoughResourcesAtBase(job.Item) )
         .Take(freeWorkers.Count).ToList();
 
       while (constructionJobs.Count > 0)
@@ -206,22 +207,9 @@ public class JobController : MonoBehaviour
     var factory = IoC.Get<AbstractItemFactory>();
     var job = Job.CreateConstructionJob(itemType, tile, factory.GetBuildTime(itemType), rotation);
 
-    var inventory = IoC.Get<World>().GetInventory();
-
-    //  Try to reserve the resource for the job
-    //    
-    if (inventory.TryReserveAvailableResource(itemType) == false)
-    {
-      //  we do not have enough resource at the base
-      // 
-
-      if (inventory.TryReserveOrderedResource(itemType) == false)
-      {
-        //  no resources in the back log. order some new resources
-        //
-        inventory.OrderResourceShipment(itemType);
-      }
-    }
+    //  Reserve a resource, order one if needed
+    //
+    IoC.Get<InventoryController>().ReserveResource(itemType);    
 
     //  Add the job to the module
     //
@@ -239,7 +227,7 @@ public class JobController : MonoBehaviour
   internal void JobIsFinished(Job job)
   {
     IoC.Get<World>().RemoveCompletedJob(job);
-    
+
     RemoveGraphics(job);
 
     //new JobUpdateEvent { Job = job }.Publish();

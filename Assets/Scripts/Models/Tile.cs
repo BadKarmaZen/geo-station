@@ -80,7 +80,9 @@ public class Tile
   {
     if (Type != type)
     {
-      World.UpdateTile(this, Type, type);
+      //  TODO can this be improved
+      IoC.Get<InventoryController>().UpdateTile(this, Type, type);
+
       Type = type;
 
       new UpdateTileEvent { Tile = this }.Publish();

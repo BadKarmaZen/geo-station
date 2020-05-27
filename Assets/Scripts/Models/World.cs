@@ -74,10 +74,10 @@ public class World
   {
     if (IsPaused) return;
 
-    foreach (var character in _characters)
-    {
-      character.Update(deltaTime);
-    }
+    //foreach (var character in _characters)
+    //{
+    //  character.Update(deltaTime);
+    //}
 
     foreach (var item in _items)
     {
@@ -86,26 +86,6 @@ public class World
 
     UpdateJobs(deltaTime);
     UpdateBuildingResources(deltaTime);
-  }
-
-  private List<Tile> _deliveryTiles = new List<Tile>();
-  internal void UpdateTile(Tile tile, TileType oldType, TileType newType)
-  {
-    if (oldType == TileType.Delivery)
-    {
-      //  We lost a place to put our deliveries
-      _deliveryTiles.Remove(tile);
-    }
-    else if (newType == TileType.Delivery)
-    {
-      //  we have gained an delivery tile
-      _deliveryTiles.Add(tile);
-    }
-  }
-
-  public IEnumerable<Tile> GetFreeDeliveryTiles()
-  {
-    return _deliveryTiles.Where(tile => tile.ResourcePile == null);
   }
 
   public Character CreateCharacter(Tile tile)

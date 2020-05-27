@@ -5,7 +5,7 @@ using System.Linq;
 using TMPro;
 using UnityEngine;
 
-public class Inventory
+public class Inventory : ObjectBase
 {
   #region Members
 
@@ -15,18 +15,6 @@ public class Inventory
   #endregion
 
   #region Methods
-
-  //  returns amount available for direct use by workers
-  private void DetailedLog(string log,  string resource)
-  {
-    var available = _resourceInventory.Where(r => r.Type == resource).Sum(r => r.Amount);
-    var reserved = _resourceInventory.Where(r => r.Type == resource).Sum(r => r.ReservedBySystem);
-
-    var ordered = _orderedResources.Where(r => r.Type == resource).Sum(r => r.Amount);
-    var system_reserved = _orderedResources.Where(r => r.Type == resource).Sum(r => r.ReservedBySystem);
-
-    Debug.Log($"Inventory.{log}: available({available},{reserved}) => {available - reserved}, ordered({ordered},{system_reserved}) => {ordered - system_reserved}");
-  }
 
   public int GetAvailableAmount(string resource)
   {
@@ -45,7 +33,6 @@ public class Inventory
   //  returns available amount + ordered amount
   public int GetOrderedAmount(string resource)
   {
-    DetailedLog(nameof(GetOrderedAmount), resource);
     var ordered = _orderedResources.Where(r => r.Type == resource).Sum(r => r.Amount - r.ReservedBySystem);
 
     return ordered;
@@ -53,10 +40,8 @@ public class Inventory
 
   public void AddOrderResourceToInventory(BuildingResource resource)
   {
-    DetailedLog(nameof(AddOrderResourceToInventory) + ".Enter", resource.Type);
     _orderedResources.Remove(resource);
     _resourceInventory.Add(resource);
-    DetailedLog(nameof(AddOrderResourceToInventory) + ".Leave", resource.Type);
   }
 
   //  the resource is empty 
@@ -67,35 +52,19 @@ public class Inventory
     new BuildingResourceUpdatedEvent { Resource = buildingResource }.Publish();
   }
 
-  //public void ReserveResourceForSystem(string resource, int amount = 1)
-  //{
-  //  DetailedLog(nameof(ReserveResourceForSystem) + ".Enter", resource);
-
-  //  var resourcePile = _resourceInventory.FirstOrDefault(r => r.Type == resource && (r.Amount - r.Reserved) > 0);
-  //  if (resourcePile == null)
-  //    resourcePile = _orderedResources.FirstOrDefault(r => r.Type == resource && (r.Amount - r.Reserved) > 0);
-
-  //  resourcePile?.ReserveBySystem();
-  //}
-
   public BuildingResource SelectBuildingResource(string resource)
   {
-    DetailedLog(nameof(SelectBuildingResource) + ".Enter", resource);
     return _resourceInventory.FirstOrDefault(r => r.Type == resource && (r.Amount - r.ReservedByWorker) != 0);
   }
 
   internal void OrderResourceShipment(string resource)
   {
-    DetailedLog(nameof(OrderResourceShipment) + ".Enter", resource);
-
-    var order = new BuildingResource(resource, this, 20);
+    var order = new BuildingResource(resource, 20);
 
     order.ReserveResourceBySystem();
     _orderedResources.Add(order);    
 
     IoC.Get<ShipmentController>().OrderResourceShipment(order);
-
-    DetailedLog(nameof(OrderResourceShipment) + ".Leave", resource);
   }
 
   //  Try Reserve Available Resource
