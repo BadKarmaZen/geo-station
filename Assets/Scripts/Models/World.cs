@@ -19,6 +19,7 @@ public class World
   private List<Character> _characters = new List<Character>();
   private List<Item> _items = new List<Item>();
   private List<Room> _rooms = new List<Room>();
+  public Inventory _inventory = new Inventory();
 
   #endregion
 
@@ -74,18 +75,10 @@ public class World
   {
     if (IsPaused) return;
 
-    //foreach (var character in _characters)
-    //{
-    //  character.Update(deltaTime);
-    //}
-
     foreach (var item in _items)
     {
       item.Update(deltaTime);
     }
-
-    UpdateJobs(deltaTime);
-    UpdateBuildingResources(deltaTime);
   }
 
   public Character CreateCharacter(Tile tile)
@@ -108,6 +101,8 @@ public class World
       DetectRooms(item);
     }
   }
+
+  internal Inventory GetInventory() => _inventory;
 
   #endregion
 
@@ -245,15 +240,7 @@ public class World
   {
     return _jobs.AsEnumerable();
   }
-
-  internal IEnumerable<BuildingResource> GetBuildiongResource()
-  {
-    return _buildingResources.AsEnumerable();
-  }
-
-  public Inventory _inventory = new Inventory();
-  internal Inventory GetInventory() => _inventory;
-
+  
   public void CancelJob(Job job)
   {
     //  TODO
@@ -268,60 +255,6 @@ public class World
       return;
     }
     _jobs.Remove(job);
-  }
-
-
-  public void UpdateJobs(float deltaTime)
-  {
-    //  remove all completed jobs from queue
-    //_jobs.RemoveAll(job => job.IsCompleted());
-
-    //var jobTodo = _jobs.FirstOrDefault(job => !job.Busy);
-    //if (jobTodo != null)
-    //{
-    //  //  work to to
-    //  //  TODO improve how to find worker
-    //  var freeWorker = _characters.FirstOrDefault(worker => worker.CurrentJob == null);
-
-    //  if (freeWorker != null)
-    //  {
-    //    freeWorker.AssignJob(jobTodo);
-    //  }
-    //}
-  }
-
-  #endregion
-
-  #region Building resources
-
-
-  private List<BuildingResource> _buildingResources = new List<BuildingResource>();
-
-  //public BuildingResource CreateBuildingResource(Tile tile, string type)
-  //{
-  //  //tile.ResourcePile = new BuildingResource(type, tile, amount: 5)
-  //  //{
-  //  //  Id = _nextBuildingId++,
-  //  //  World = this
-  //  //};
-
-  //  //_buildingResources.Add(tile.ResourcePile);
-  //  //return tile.ResourcePile;
-  //}
-
-  //internal BuildingResource SelectResourcePile(string type)
-  //  => _buildingResources?.FirstOrDefault(resource => resource.Type == type && resource.CanTakeResource());
-
-  //  TODO
-  //public void RemoveBuildingResource(BuildingResource resource)
-  //{
-  //  resource.Tile.ResourcePile = null;
-  //  _buildingResources.Remove(resource);
-  //}
-
-  public void UpdateBuildingResources(float deltaTime)
-  {
-    //_buildingResources?.RemoveAll(r => r.Amount == 0);
   }
 
   #endregion
@@ -401,8 +334,8 @@ public class World
     data.tiles = GetAllTiles(tile => tile.Type != TileType.Space).Select(tile => tile.ToData()).ToList();
     data.items = _items.Select(item => item.ToData()).ToList();
     data.jobs = _jobs.Select(job => job.ToData()).ToList();
+    data.inventory = _inventory.ToData();
     data.characters = _characters.Select(character => character.ToData()).ToList();
-    data.building_resources = _buildingResources.Select(res => res.ToData()).ToList();
 
     return data;
   }
@@ -431,11 +364,7 @@ public class World
     }
 
     //  create resource
-    foreach (var buildingResource in data.building_resources)
-    {
-      var resource = new BuildingResource(buildingResource, world);
-      world._buildingResources.Add(resource);
-    }
+    world._inventory = new Inventory(data.inventory, world);
 
     //  create characters
     foreach (var character in data.characters)
@@ -550,5 +479,5 @@ public class WorldData
   public List<ItemData> items;
   public List<JobData> jobs;
   public List<CharacterData> characters;
-  public List<BuildingResourceData> building_resources;
+  public InventoryData inventory;
 }

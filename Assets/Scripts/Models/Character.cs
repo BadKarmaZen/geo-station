@@ -199,10 +199,11 @@ public class Character : ObjectBase
       case CharacterState.DropDelivery:
 
         Log("DropDelivery");
-        IoC.Get<World>().GetInventory().AddOrderResourceToInventory(CurrentJob.Delivery);
-
+        IoC.Get<World>().GetInventory().AddOrderResourceToInventory(CurrentJob.Delivery);        
         CurrentJob.Tile.ResourcePile = CurrentJob.Delivery;
         new BuildingResourceUpdatedEvent { Resource = CurrentJob.Delivery }.Publish();
+
+        IoC.Get<JobController>().JobIsFinished(CurrentJob);
 
         CurrentJob = null;
         DestinationTile = null;
@@ -239,6 +240,7 @@ public class Character : ObjectBase
         }
 
         break;
+
       case CharacterState.TakeResource:
         if (CurrentTile != SelectedResourcePile.Tile)
         {
@@ -254,6 +256,7 @@ public class Character : ObjectBase
           DestinationTile = null;
         }
         break;
+
       case CharacterState.GotoJobTile:
 
         //  are we at job tile
@@ -265,17 +268,17 @@ public class Character : ObjectBase
         {
           SetDestination(CurrentJob.Tile);
         }
-
         break;
-      case CharacterState.Constructing:
 
+      case CharacterState.Constructing:
         if (CurrentJob.ProcessJob(deltaTime))
         {
           //  jobe is done
-          //HasResource = false;
+          //
           IoC.Get<JobController>().JobIsFinished(CurrentJob);
 
           CurrentJob = null;
+          SelectedResourcePile = null;
           DestinationTile = null;
           SetState(CharacterState.Idle);
         }
@@ -438,7 +441,7 @@ public class Character : ObjectBase
     HasResource = data.has_resource;
 
     CurrentJob = world.GetJobs().FirstOrDefault(job => job.Id == data.job_id);
-    SelectedResourcePile = world.GetBuildiongResource().FirstOrDefault(resource => resource.Id == data.resource_id);
+    SelectedResourcePile = world.GetInventory().LoadResource(data.resource_id);
   }
 
   public CharacterData ToData() => new CharacterData

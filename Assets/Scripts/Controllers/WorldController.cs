@@ -55,11 +55,7 @@ public class WorldController : BaseController
     else
     {
       NewGame();
-    }
-
-    //  register the world for all controllers
-    //
-    IoC.RegisterInstance(_world);
+    }   
   }
 
   private void LoadUiElements()
@@ -81,6 +77,8 @@ public class WorldController : BaseController
     {
       IoC.Get<JobController>().LoadJob(job);
     }
+
+    IoC.Get<InventoryController>().LoadUI();
   }
 
   // Update is called once per frame
@@ -140,23 +138,6 @@ public class WorldController : BaseController
 
   internal World GetWorld() => _world;
 
-  //internal void CreateResource(string resourceType, Tile tile)
-  //{
-  //  if (tile.IsOccupied)
-  //  {
-  //    Debug.Log("Tile already contains resources");
-  //    return;
-  //  }
-
-  //  var resource = _world.CreateBuildingResource(tile, resourceType);
-  //  new BuildingResourceUpdatedEvent { Resource = resource }.Publish();
-  //}
-
-  //public BuildingResource RequestShipment(string resource)
-  //{
-  //  return _world.CreateBuildingResource(resource);
-  //}
-
   public void NewGame()
   {
     Log("NewGame");
@@ -164,6 +145,7 @@ public class WorldController : BaseController
     //  Creates a new world
     //
     _world = new World(100, 100);
+    IoC.RegisterInstance(_world);
 
     //  Create all ui tiles
     //
@@ -205,6 +187,7 @@ public class WorldController : BaseController
     var saveGame = JsonUtility.FromJson<GameData>(json);
 
     _world = World.LoadSaveGame(saveGame.world);
+    IoC.RegisterInstance(_world);
 
     //  World is create we need to create all the ui elemements
 
@@ -232,18 +215,7 @@ public class WorldController : BaseController
 
     File.WriteAllText(@"d:\[unity]\geo.txt", json);
   }
-
-  //internal void CreateJob(Job job)
-  //{
-  //  _world.AddJob(job);
-
-  //  //  get resources
-  //  IoC.Get<ShipmentController>().RequestResources(job.Item);
-
-  //  new JobUpdateEvent { Job = job }.Publish();
-  //}
-
-
+  
   #endregion
 
   #region Helper Methods

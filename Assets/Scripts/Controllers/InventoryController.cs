@@ -70,7 +70,7 @@ public class InventoryController : BaseController
   {
     Log(resourceType);
     var resourcePile = IoC.Get<World>().GetInventory().SelectBuildingResource(resourceType);
-    
+
     if (resourcePile != null)
     {
       Log($"ReserveResourceByWorker {resourcePile.Tile.Position}");
@@ -80,8 +80,17 @@ public class InventoryController : BaseController
     {
       LogError($"No resource availlable: Error in inventroy");
     }
-    
+
     return resourcePile;
+  }
+
+  internal void LoadUI()
+  {
+    foreach (var resource in IoC.Get<World>().GetInventory().GetResourcesAtBase())
+    {
+      new BuildingResourceUpdatedEvent { Resource = resource }.Publish();
+
+    }
   }
 
   internal void TakeResource(BuildingResource resource)
@@ -105,11 +114,11 @@ public class InventoryController : BaseController
   }
 
   internal Tile GetUnoccupiedDeliveryTile()
-  { 
+  {
     if (_unoccupiedTiles.Count != 0)
     {
       var deliveryTile = _unoccupiedTiles.First();
-      
+
       Log($"found @ {deliveryTile.Position}");
 
       _unoccupiedTiles.Remove(deliveryTile);
@@ -118,7 +127,7 @@ public class InventoryController : BaseController
       return deliveryTile;
     }
 
-    return null;   
+    return null;
   }
 
   internal void UpdateTile(Tile tile, TileType oldType, TileType newType)
