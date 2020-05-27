@@ -61,7 +61,7 @@ public class CharacterController : MonoBehaviour
     characterInfo.main.transform.SetParent(this.transform, true);
 
     var renderer = characterInfo.main.AddComponent<SpriteRenderer>();
-    renderer.sprite = _resourceCollection.GetSprite("Astronaut_B");
+    renderer.sprite = _resourceCollection.GetSprite("Astronaut_B_South");
     renderer.sortingLayerName = "Character";
 
     //  create hand object
@@ -81,15 +81,25 @@ public class CharacterController : MonoBehaviour
   {
     // find game object
     var info = _characterGraphics[message.Character];
-    if (message.Hand)
+    try
     {
-      info.hand.transform.position = new Vector3(info.hand.transform.position.x, message.Character.HandY, -1);
+      if (message.Hand)
+      {
+        info.hand.SetActive(true);
+        info.main.GetComponent<SpriteRenderer>().sprite = _resourceCollection.GetSprite($"Astronaut_B_{message.Direction}");
+        info.hand.transform.position = new Vector3(info.hand.transform.position.x, message.Character.HandY, -1);
+      }
+      else
+      {
+        info.hand.SetActive(false);
+        info.main.GetComponent<SpriteRenderer>().sprite = _resourceCollection.GetSprite($"Astronaut_B_{message.Direction}");
+        info.main.transform.position = new Vector3(message.Character.X, message.Character.Y, 0);
+      }
     }
-    else
+    catch (System.Exception e)
     {
-      info.main.transform.position = new Vector3(message.Character.X, message.Character.Y, 0);
-    }
-
+      Debug.LogError(e.Message);
+    }    
   }
 
   #endregion

@@ -4,9 +4,18 @@ TextureImporter:
   internalIDToNameTable:
   - first:
       213: -4785291408409416348
-    second: Astronaut_B
+    second: Astronaut_B_South
+  - first:
+      213: 4814174490318782156
+    second: Astronaut_B_North
+  - first:
+      213: -2641088843931334693
+    second: Astronaut_B_West
+  - first:
+      213: -1467691370905001408
+    second: Astronaut_B_East
   externalObjects: {}
-  serializedVersion: 10
+  serializedVersion: 11
   mipmaps:
     mipMapMode: 0
     enableMipMap: 0
@@ -60,8 +69,9 @@ TextureImporter:
   maxTextureSizeSet: 0
   compressionQualitySet: 0
   textureFormatSet: 0
+  applyGammaDecoding: 1
   platformSettings:
-  - serializedVersion: 2
+  - serializedVersion: 3
     buildTarget: DefaultTexturePlatform
     maxTextureSize: 2048
     resizeAlgorithm: 0
@@ -72,7 +82,8 @@ TextureImporter:
     allowsAlphaSplitting: 0
     overridden: 0
     androidETC2FallbackOverride: 0
-  - serializedVersion: 2
+    forceMaximumCompressionQuality_BC6H_BC7: 1
+  - serializedVersion: 3
     buildTarget: Standalone
     maxTextureSize: 2048
     resizeAlgorithm: 0
@@ -83,11 +94,12 @@ TextureImporter:
     allowsAlphaSplitting: 0
     overridden: 0
     androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 1
   spriteSheet:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Astronaut_B
+      name: Astronaut_B_South
       rect:
         serializedVersion: 2
         x: 6
@@ -103,6 +115,69 @@ TextureImporter:
       bones: []
       spriteID: 76706328e12915246917b12e69200d9e
       internalID: -4785291408409416348
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Astronaut_B_North
+      rect:
+        serializedVersion: 2
+        x: 71
+        y: 195
+        width: 54
+        height: 60
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: cceb23e31326fc240800000000000000
+      internalID: 4814174490318782156
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Astronaut_B_West
+      rect:
+        serializedVersion: 2
+        x: 136
+        y: 196
+        width: 54
+        height: 60
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: bd7c93580b7f85bd0800000000000000
+      internalID: -2641088843931334693
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Astronaut_B_East
+      rect:
+        serializedVersion: 2
+        x: 194
+        y: 196
+        width: 54
+        height: 60
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 0422d4d6976b1abe0800000000000000
+      internalID: -1467691370905001408
       vertices: []
       indices: 
       edges: []

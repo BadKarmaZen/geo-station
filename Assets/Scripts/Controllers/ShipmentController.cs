@@ -140,9 +140,6 @@ public class ShipmentController : BaseController
 
         Log("All resources are picked up");
         _currentState = State.UnDocking;
-
-        //  TODO path finding issue
-        _dockedTile.SetType(TileType.Docking);
       }
     }
   }
@@ -181,9 +178,6 @@ public class ShipmentController : BaseController
     {
       Log("Docking Finished");
       _currentState = State.Docked;
-
-      //  TODO path finding issue
-      _dockedTile.SetType(TileType.Floor);
     }
   }
 

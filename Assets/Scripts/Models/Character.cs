@@ -6,6 +6,7 @@ using UnityEngine;
 using System.Security.Cryptography;
 using UnityEngine.Monetization;
 using System.Runtime.CompilerServices;
+using System.Globalization;
 
 #region Events
 
@@ -18,6 +19,8 @@ public class CharacterCreatedEvent : CharacterEvent { }
 
 public class CharacterUpdatedEvent : CharacterEvent
 {
+  public CharacterDirection Direction { get; set; }
+
   public bool Hand { get; internal set; }
 }
 
@@ -43,7 +46,13 @@ public enum CharacterState
   GotoJobTile,
   Constructing,
 }
-
+public enum CharacterDirection
+{
+  North,
+  East,
+  South,
+  West
+}
 
 public class Character : ObjectBase
 {
@@ -54,6 +63,7 @@ public class Character : ObjectBase
   private Stack<Tile> _path = null;
 
   private CharacterState _currentState;
+  private CharacterDirection _characterDirection = CharacterDirection.South;
 
   #endregion
 
@@ -74,7 +84,14 @@ public class Character : ObjectBase
   {
     get
     {
-      return Mathf.Lerp(CurrentTile.Position.x, NextTile.Position.x, _movementCompletePercentage);
+      if (NextTile != null)
+      {
+        return Mathf.Lerp(CurrentTile.Position.x, NextTile.Position.x, _movementCompletePercentage);
+      }
+      else
+      {
+        return CurrentTile.Position.x;
+      }
     }
   }
 
@@ -82,7 +99,14 @@ public class Character : ObjectBase
   {
     get
     {
-      return Mathf.Lerp(CurrentTile.Position.y, NextTile.Position.y, _movementCompletePercentage);
+      if (NextTile != null)
+      {
+        return Mathf.Lerp(CurrentTile.Position.y, NextTile.Position.y, _movementCompletePercentage);
+      }
+      else
+      {
+        return CurrentTile.Position.y;
+      }
     }
   }
 
@@ -140,6 +164,7 @@ public class Character : ObjectBase
         //  nothing to do 
         MoveIdle();
         break;
+
       case CharacterState.WanderAround:
         if (CurrentTile == DestinationTile)
         {
@@ -199,7 +224,7 @@ public class Character : ObjectBase
       case CharacterState.DropDelivery:
 
         Log("DropDelivery");
-        IoC.Get<World>().GetInventory().AddOrderResourceToInventory(CurrentJob.Delivery);        
+        IoC.Get<World>().GetInventory().AddOrderResourceToInventory(CurrentJob.Delivery);
         CurrentJob.Tile.ResourcePile = CurrentJob.Delivery;
         new BuildingResourceUpdatedEvent { Resource = CurrentJob.Delivery }.Publish();
 
@@ -213,7 +238,7 @@ public class Character : ObjectBase
       case CharacterState.SelectResourcePile:
 
         SelectedResourcePile = IoC.Get<InventoryController>().ReserveResourcePile(CurrentJob.Item);
-        
+
         if (SelectedResourcePile != null)
         {
           SetState(CharacterState.GotoResourcePile);
@@ -285,13 +310,13 @@ public class Character : ObjectBase
         else
         {
           //  animate handes
-          _handMovement += 0.03f;
+          _handMovement += 0.01f;
           if (_handMovement > 1.0f)
           {
             _handMovement = 0f;
           }
 
-          new CharacterUpdatedEvent { Character = this, Hand = true }.Publish();
+          new CharacterUpdatedEvent { Character = this, Hand = true, Direction = _characterDirection }.Publish();
         }
 
         break;
@@ -329,6 +354,8 @@ public class Character : ObjectBase
         if (_path != null && _path.Count > 0)
         {
           NextTile = _path.Pop();
+
+          UpdateDirection();
         }
         else
         {
@@ -339,10 +366,8 @@ public class Character : ObjectBase
     else
     {
       //  Arrived
-
       DestinationTile = null;
-
-
+      UpdateDirection();
     }
 
     //  Enter behaviour
@@ -374,9 +399,39 @@ public class Character : ObjectBase
       }
       else
       {
-        IoC.Get<EventAggregator>().Publish(new CharacterUpdatedEvent { Character = this });
+        new CharacterUpdatedEvent { Character = this, Direction = _characterDirection }.Publish();
       }
     }
+  }
+
+  private void UpdateDirection()
+  {
+    if (NextTile == null)
+    {
+      //  default face to player
+      _characterDirection = CharacterDirection.South;
+    }
+    else
+    {
+      if (NextTile == CurrentTile.GetNorthTile())
+      {
+        _characterDirection = CharacterDirection.North;
+      }
+      else if (NextTile == CurrentTile.GetSouthTile())
+      {
+        _characterDirection = CharacterDirection.South;
+      }
+      else if (NextTile == CurrentTile.GetWestTile())
+      {
+        _characterDirection = CharacterDirection.West;
+      }
+      else
+      {
+        _characterDirection = CharacterDirection.East;
+      }
+    }
+
+    new CharacterUpdatedEvent { Character = this, Direction = _characterDirection }.Publish();
   }
 
   public void AssignJob(Job job)
@@ -408,7 +463,9 @@ public class Character : ObjectBase
     if (tile.Type != TileType.Space)
     {
       //  Need to find path to
-      var pathfinder = new PathFinding();
+      //  if we are on our way to the docking, allow the pathfinding to walk over TileType.Docking tiles
+      //
+      var pathfinder = new PathFinding(_currentState == CharacterState.GotoPickUpTile);
       _path = pathfinder.FindPath(CurrentTile, tile);
 
       if (_path != null)

@@ -22,14 +22,14 @@ public class PathFinding
   Node[,] _grid;
 
 
-  public PathFinding()
+  public PathFinding(bool allowDocking = false)
   {
     _world = IoC.Get<WorldController>().GetWorld();
 
-    CreateGrid();
+    CreateGrid(allowDocking);
   }
 
-  private void CreateGrid()
+  private void CreateGrid(bool allowDocking)
   {
     _grid = new Node[_world.Width, _world.Height];
 
@@ -41,8 +41,10 @@ public class PathFinding
         _grid[x, y] = new Node
         {
           Tile = tile,
-          Walkable = (tile.Type == TileType.Floor || tile.Type == TileType.Delivery )&&
-                    (tile.Item == null || tile.Item.MovementCost != 0),
+          Walkable = (tile.Type == TileType.Floor || 
+                      tile.Type == TileType.Delivery ||
+                      (allowDocking && tile.Type == TileType.Docking)) &&
+                      (tile.Item == null || tile.Item.MovementCost != 0),
           mCost = tile.Item?.MovementCost ?? 1f    
         };
       }
