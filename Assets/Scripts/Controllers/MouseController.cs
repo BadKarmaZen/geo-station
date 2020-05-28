@@ -49,6 +49,7 @@ public class MouseController : MonoBehaviour
 
   #region Unity
 
+  public GameObject background;
   public GameObject cursor;
 
   // Start is called before the first frame update
@@ -81,6 +82,7 @@ public class MouseController : MonoBehaviour
     {
       var diff = _lastFramePosition - _currentFramePosition;
       Camera.main.transform.Translate(diff);
+      background.transform.Translate(diff);
     }
 
     var scroll = Input.GetAxis("Mouse ScrollWheel");
@@ -89,7 +91,9 @@ public class MouseController : MonoBehaviour
       if (!Input.GetKey(KeyCode.LeftShift))
       {
         var newSize = Camera.main.orthographicSize - (Camera.main.orthographicSize * scroll);
-        Camera.main.orthographicSize = Mathf.Clamp(newSize, 3f, 50f);
+        var clampedSize = Mathf.Clamp(newSize, 3f, 50f);
+        Camera.main.orthographicSize = clampedSize;
+        background.transform.localScale = new Vector3(clampedSize / 2, clampedSize / 2);
       }
       else
       {
